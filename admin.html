@@ -36,6 +36,7 @@
             justify-content: center; 
             gap: 15px; 
         }
+        .main-title img { width: 50px; height: auto; }
 
         .settings-bar { 
             background: white; 
@@ -47,19 +48,20 @@
             gap: 15px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
             margin-bottom: 20px; 
+            flex-wrap: wrap;
         }
         
-        .settings-bar input { padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
-        .btn-save { background-color: var(--blue-save); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
+        .settings-bar input { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Tajawal'; }
+        .btn-save { background-color: var(--blue-save); color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 1000px; margin: 0 auto; }
+        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 1100px; margin: 0 auto; }
         table { width: 100%; border-collapse: collapse; }
         thead { background-color: var(--dark-navy); color: white; }
         th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
         
-        .status-badge { padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
-        .late { background: #ffdada; color: #c0392b; }
-        .ontime { background: #d4f7d4; color: #27ae60; }
+        .status-check { color: #27ae60; font-size: 18px; }
+        .delay-text { color: #e74c3c; font-weight: bold; }
+        .early-text { color: #f39c12; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -71,16 +73,16 @@
     </div>
 
     <div class="main-title">
-        <i class="fas fa-school" style="color: #3498db;"></i>
+        <i class="fas fa-school" style="color: var(--blue-save); font-size: 45px;"></i>
         <h1>ثانوية الصحافة</h1>
     </div>
 
     <div class="settings-bar">
         <i class="far fa-clock"></i>
         <strong>ضبط الدوام الرسمي:</strong>
-        حضور: <input type="time" id="arrivalTime" value="06:45">
-        انصراف: <input type="time" id="departureTime" value="12:30">
-        <button class="btn-save" onclick="updateWorkHours()">حفظ الإعدادات</button>
+        حضور: <input type="time" id="officialArrival" value="06:45">
+        انصراف: <input type="time" id="officialDeparture" value="12:30">
+        <button class="btn-save" onclick="saveSettings()">حفظ الإعدادات</button>
     </div>
 
     <div class="table-container">
@@ -95,18 +97,21 @@
                     <th>الحالة</th>
                 </tr>
             </thead>
-            <tbody id="attendanceBody">
-                </tbody>
+            <tbody id="attendanceTableBody">
+                <tr>
+                    <td colspan="6">جاري جلب البيانات من النظام...</td>
+                </tr>
+            </tbody>
         </table>
     </div>
 
     <script>
-        // إعدادات Firebase
+        // إعدادات Firebase الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
+            databaseURL: "https://hader-system-default-rtdb.firebaseio.com/", 
             projectId: "hader-system",
-            databaseURL: "https://hader-system-default-rtdb.firebaseio.com/", // تأكد من صحة الرابط
             storageBucket: "hader-system.firebasestorage.app",
             messagingSenderId: "1039709774940",
             appId: "1:1039709774940:web:078351fe5cb90593473299"
@@ -114,22 +119,24 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        function updateWorkHours() {
-            const start = document.getElementById('arrivalTime').value;
-            const end = document.getElementById('departureTime').value;
+        // وظيفة حفظ إعدادات الوقت
+        function saveSettings() {
+            const start = document.getElementById('officialArrival').value;
+            const end = document.getElementById('officialDeparture').value;
             database.ref('settings/workHours').set({ start, end })
-            .then(() => alert("تم تحديث ساعات الدوام بنجاح"));
+            .then(() => alert("تم حفظ مواعيد الدوام بنجاح"));
         }
 
-        // جلب بيانات الحضور لليوم الحالي
-        const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-        database.ref('attendance/' + today).on('value', (snapshot) => {
+        // جلب البيانات وعرضها بشكل تلقائي (Real-time)
+        const todayDate = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        
+        database.ref('attendance/' + todayDate).on('value', (snapshot) => {
             const data = snapshot.val();
-            const tableBody = document.getElementById('attendanceBody');
+            const tableBody = document.getElementById('attendanceTableBody');
             tableBody.innerHTML = "";
 
             if (!data) {
-                tableBody.innerHTML = '<tr><td colspan="6">لا توجد سجلات لهذا اليوم حتى الآن</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6">لا توجد سجلات حضور لليوم حتى الآن</td></tr>';
                 return;
             }
 
@@ -137,14 +144,14 @@
                 const record = data[id];
                 const row = `
                     <tr>
-                        <td>${record.name}<br><small>${id}</small></td>
+                        <td><strong>${record.name}</strong><br><small style="color:#95a5a6">${id}</small></td>
                         <td>${record.checkIn || '--:--'}</td>
-                        <td style="color:red">${record.lateMins || 0}</td>
+                        <td class="delay-text">${record.lateMins || 0}</td>
                         <td>${record.checkOut || '--:--'}</td>
-                        <td>${record.earlyMins || 0}</td>
-                        <td><span class="status-badge ${record.lateMins > 0 ? 'late' : 'ontime'}">
-                            ${record.inStatus || 'حاضر'}
-                        </span></td>
+                        <td class="early-text">${record.earlyMins || 0}</td>
+                        <td>
+                            ${record.checkOut ? '<span style="color:#27ae60">انصرف <i class="fas fa-check-square"></i></span>' : '<span style="color:#3498db">موجود حالياً</span>'}
+                        </td>
                     </tr>
                 `;
                 tableBody.innerHTML += row;
