@@ -6,11 +6,12 @@ const firebaseConfig = {
     messagingSenderId: "1039709774940",
     appId: "1:1039709774940:web:078351fe5cb90593473299"
 };
+
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// إحداثيات مجمع أبي بن كعب (حي الياسمين - جامع الضيان)
-const SCHOOL_LOC = { lat: 24.8142, lng: 46.6418 }; 
+// الإحداثيات الجديدة لثانوية الصحافة الأهلية
+const SCHOOL_LOC = { lat: 24.8001897, lng: 46.6449937 }; 
 
 let WORK_START, WORK_END, map, userMarker, schoolCircle, distanceLine;
 const urlParams = new URLSearchParams(window.location.search);
@@ -22,11 +23,13 @@ function init() {
         document.getElementById('display-name').innerText = "الأستاذ/ " + tName;
         document.getElementById('display-id').innerText = tId;
     }
+    
+    // إعداد الخريطة بناءً على الموقع الجديد
     map = L.map('map').setView([SCHOOL_LOC.lat, SCHOOL_LOC.lng], 17);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     
-    // علامة المدرسة ونطاق الـ 50 متر
-    L.marker([SCHOOL_LOC.lat, SCHOOL_LOC.lng]).addTo(map).bindPopup('مجمع أبي بن كعب');
+    // علامة المجمع ونطاق الـ 50 متر
+    L.marker([SCHOOL_LOC.lat, SCHOOL_LOC.lng]).addTo(map).bindPopup('ثانوية الصحافة الأهلية');
     schoolCircle = L.circle([SCHOOL_LOC.lat, SCHOOL_LOC.lng], { color: '#27ae60', radius: 50, fillOpacity: 0.1 }).addTo(map);
     distanceLine = L.polyline([], {color: '#3498db', dashArray: '5, 10'}).addTo(map);
     
