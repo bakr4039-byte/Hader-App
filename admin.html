@@ -11,15 +11,15 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        :root { --dark-navy: #34495e; --purple: #8e44ad; --gray-btn: #95a5a6; --blue-admin: #3498db; --danger: #e74c3c; }
+        :root { --dark-navy: #34495e; --purple: #8e44ad; --blue-admin: #3498db; --danger: #e74c3c; }
         body { font-family: 'Tajawal', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
         .nav-header { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
         .btn-nav { padding: 10px 25px; border-radius: 8px; border: none; color: white; cursor: pointer; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 16px; }
-        .logout { background-color: var(--gray-btn); }
+        .logout { background-color: #95a5a6; }
         .links-db { background-color: var(--dark-navy); }
         .reports { background-color: var(--purple); }
         .main-title { text-align: center; color: #2c3e50; font-size: 40px; margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .date-display { background: #fff; display: block; width: fit-content; margin: 0 auto 20px; padding: 10px 30px; border-radius: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); color: var(--blue-admin); font-weight: bold; font-size: 18px; }
+        .date-display { background: #fff; display: block; width: fit-content; margin: 0 auto 20px; padding: 10px 30px; border-radius: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); color: var(--blue-admin); font-weight: bold; font-size: 18px; border: 1px solid #eee; }
         .settings-bar { background: white; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; flex-wrap: wrap; }
         .settings-bar input { padding: 8px; border: 1px solid #ddd; border-radius: 6px; text-align: center; }
         .btn-save { background-color: var(--blue-admin); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
@@ -45,7 +45,7 @@
         <h1>ثانوية الصحافة</h1>
     </div>
 
-    <div class="date-display" id="date-info">
+    <div class="date-display">
         <i class="far fa-calendar-alt"></i> <span id="day-name">--</span> : <span id="current-date">--/--/----</span>
     </div>
 
@@ -74,6 +74,7 @@
     </div>
 
     <script>
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
@@ -87,6 +88,7 @@
         const database = firebase.database();
         const todayKey = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
 
+        // جلب البيانات ومقارنة الحضور بالغياب
         function loadFullStatus() {
             database.ref('teachers').on('value', (tSnap) => {
                 const teachers = tSnap.val();
@@ -96,13 +98,22 @@
                     tableBody.innerHTML = "";
 
                     if (!teachers) {
-                        tableBody.innerHTML = '<tr><td colspan="6">لا يوجد معلمين في القاعدة</td></tr>';
+                        tableBody.innerHTML = '<tr><td colspan="6">لا يوجد معلمين في قاعدة البيانات. أضفهم من صفحة الروابط.</td></tr>';
                         return;
                     }
 
                     for (let id in teachers) {
                         const t = teachers[id];
                         const a = attendance[id];
+                        
+                        // تحديد الحالة: إذا كان غائباً مسجلاً، أو لم يحضر بعد، أو حاضر
+                        let statusHTML = "";
+                        if (a) {
+                            statusHTML = `<span class="status-present">${a.inStatus || 'حاضر'}</span>`;
+                        } else {
+                            statusHTML = `<span class="status-absent">غائب / لم يحضر</span>`;
+                        }
+
                         tableBody.innerHTML += `
                             <tr>
                                 <td><strong>${t.name}</strong><br><small>${id}</small></td>
@@ -110,25 +121,31 @@
                                 <td style="color:red">${a?.lateMins || 0}</td>
                                 <td>${a?.checkOut || '--:--'}</td>
                                 <td>${a?.earlyMins || 0}</td>
-                                <td><span class="${a ? 'status-present' : 'status-absent'}">${a ? (a.inStatus || 'حاضر') : 'لم يحضر بعد'}</span></td>
+                                <td>${statusHTML}</td>
                             </tr>`;
                     }
                 });
             });
         }
 
+        // تسجيل غياب جماعي لمن لم يحضر
         function recordAbsenceAll() {
-            if(!confirm("هل تريد تسجيل غياب لكل من لم يحضر؟")) return;
+            if(!confirm("هل تريد اعتماد غياب لجميع المعلمين الذين لم يبصموا اليوم؟")) return;
             database.ref('teachers').once('value', s => {
                 const teachers = s.val();
                 database.ref('attendance/' + todayKey).once('value', aSnap => {
                     const att = aSnap.val() || {};
                     for (let id in teachers) {
                         if (!att[id]) {
-                            database.ref(`attendance/${todayKey}/${id}`).set({ name: teachers[id].name, inStatus: "غائب", checkIn: "غائب", lateMins: 0 });
+                            database.ref(`attendance/${todayKey}/${id}`).set({
+                                name: teachers[id].name,
+                                inStatus: "غائب",
+                                checkIn: "غائب",
+                                lateMins: 0
+                            });
                         }
                     }
-                    alert("تم تحديث السجل");
+                    alert("تم اعتماد سجل الغياب لليوم");
                 });
             });
         }
@@ -136,7 +153,7 @@
         function saveSettings() {
             const start = document.getElementById('arrivalTime').value;
             const end = document.getElementById('departureTime').value;
-            database.ref('settings/workHours').set({ start, end }).then(() => alert("تم الحفظ"));
+            database.ref('settings/workHours').set({ start, end }).then(() => alert("تم حفظ الإعدادات"));
         }
 
         window.onload = () => {
