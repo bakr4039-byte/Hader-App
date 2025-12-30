@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام حاضر - بوابة المعلم</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>نظام حاضر الذكي 📍</h1>
+            <p id="current-time"></p>
+        </header>
+
+        <main class="card">
+            <div class="user-info">
+                <h3>مرحباً بك، الأستاذ/ محمد</h3>
+                <p>الرقم الوظيفي: 10127</p>
+            </div>
+
+            <div class="action-zone">
+                <button id="attendance-btn" onclick="startCheck()">تسجيل حضور (GPS)</button>
+                <p id="status-msg">اضغط على الزر لتسجيل حضورك</p>
+            </div>
+        </main>
+
+        <section class="stats-grid">
+            <div class="stat-box green">الحضور: 46</div>
+            <div class="stat-box red">الغياب: 1</div>
+            <div class="stat-box yellow">التأخر: 6</div>
+        </section>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

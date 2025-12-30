@@ -1,0 +1,97 @@
+/* تنسيق عام للموقع */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    direction: rtl; /* لضمان الاتجاه من اليمين لليسار */
+}
+
+.container {
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    padding: 20px;
+}
+
+header h1 {
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+#current-time {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+/* بطاقة المعلم الأساسية */
+.card {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.user-info h3 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.user-info p {
+    color: #95a5a6;
+    margin: 5px 0 20px 0;
+}
+
+/* زر البصمة */
+#attendance-btn {
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    border-radius: 30px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+#attendance-btn:hover {
+    background: #34495e;
+    transform: translateY(-2px);
+}
+
+#attendance-btn:active {
+    transform: translateY(0);
+}
+
+#status-msg {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    min-height: 40px;
+}
+
+/* شبكة الإحصائيات السريعة */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+}
+
+.stat-box {
+    padding: 15px 5px;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.green { background: #27ae60; }
+.red { background: #e74c3c; }
+.yellow { background: #f1c40f; }
