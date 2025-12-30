@@ -6,28 +6,26 @@
     <title>إدارة الروابط - ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        :root {
-            --dark-navy: #34495e;
-            --blue-link: #3498db;
-        }
+        :root { --dark-navy: #34495e; --blue-link: #3498db; }
         body { font-family: 'Tajawal', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 90%; max-width: 800px; text-align: center; }
         h1 { color: #2c3e50; display: flex; align-items: center; justify-content: center; gap: 15px; font-size: 30px; margin-bottom: 30px; }
         .input-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
         input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 220px; text-align: center; font-family: 'Tajawal'; font-size: 16px; }
-        .btn-add { background-color: var(--dark-navy); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        .btn-add:hover { background-color: #2c3e50; }
-        
+        .btn-add { background-color: var(--dark-navy); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { border-bottom: 2px solid #f0f0f0; padding: 15px; color: #7f8c8d; }
         td { padding: 15px; border-bottom: 1px solid #f9f9f9; font-size: 18px; }
         
+        /* تنسيق أزرار الإجراءات */
+        .actions-cell { display: flex; justify-content: center; gap: 15px; }
         .btn-delete { color: #e74c3c; cursor: pointer; border: none; background: none; font-size: 18px; }
+        .btn-copy { color: #3498db; cursor: pointer; border: none; background: none; font-size: 18px; }
+        
         .back-link { margin-top: 30px; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--blue-link); font-weight: bold; }
         .back-link i { background: var(--dark-navy); color: white; padding: 5px; border-radius: 4px; font-size: 12px; }
     </style>
@@ -52,17 +50,14 @@
                 </tr>
             </thead>
             <tbody id="teacherTable">
-                <tr><td colspan="3">جاري تحميل البيانات...</td></tr>
+                <tr><td colspan="3">جاري التحميل...</td></tr>
             </tbody>
         </table>
 
-        <a href="admin.html" class="back-link">
-             العودة للوحة الإدارة <i class="fas fa-arrow-left"></i>
-        </a>
+        <a href="admin.html" class="back-link">العودة للوحة الإدارة <i class="fas fa-arrow-left"></i></a>
     </div>
 
     <script>
-        // إعدادات Firebase الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
@@ -75,32 +70,22 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // وظيفة إضافة معلم
         function addTeacher() {
             const name = document.getElementById('tName').value;
             const id = document.getElementById('tID').value;
-            if(!name || !id) return alert("يرجى إدخال الاسم والرقم الوظيفي");
-
-            database.ref('teachers/' + id).set({
-                name: name,
-                id: id
-            }).then(() => {
-                document.getElementById('tName').value = '';
-                document.getElementById('tID').value = '';
-                alert("تمت الإضافة بنجاح");
-            }).catch(err => alert("خطأ: " + err.message));
+            if(!name || !id) return alert("يرجى إدخال البيانات");
+            database.ref('teachers/' + id).set({ name: name, id: id })
+            .then(() => { 
+                document.getElementById('tName').value = ''; 
+                document.getElementById('tID').value = ''; 
+            });
         }
 
-        // جلب وعرض المعلمين من Firebase
         database.ref('teachers').on('value', (snapshot) => {
             const list = snapshot.val();
             const tableBody = document.getElementById('teacherTable');
             tableBody.innerHTML = "";
-
-            if (!list) {
-                tableBody.innerHTML = '<tr><td colspan="3">لا يوجد معلمون مسجلون حالياً</td></tr>';
-                return;
-            }
+            if (!list) { tableBody.innerHTML = '<tr><td colspan="3">لا يوجد معلمون</td></tr>'; return; }
 
             for (let id in list) {
                 const teacher = list[id];
@@ -108,8 +93,11 @@
                     <tr>
                         <td><strong>${teacher.name}</strong></td>
                         <td>${id}</td>
-                        <td>
-                            <button class="btn-delete" onclick="deleteTeacher('${id}')">
+                        <td class="actions-cell">
+                            <button class="btn-copy" onclick="copyLink('${id}', '${teacher.name}')" title="نسخ الرابط">
+                                <i class="fas fa-copy"></i> نسخ الرابط
+                            </button>
+                            <button class="btn-delete" onclick="deleteTeacher('${id}')" title="حذف">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -117,11 +105,23 @@
             }
         });
 
-        // حذف معلم
+        // دالة إنشاء الرابط ونسخه
+        function copyLink(id, name) {
+            // إنشاء الرابط بناءً على نطاق GitHub Pages الخاص بك
+            const baseUrl = "https://bakr4039-byte.github.io/Hader-App/index.html";
+            const fullLink = `${baseUrl}?id=${id}&name=${encodeURIComponent(name)}`;
+
+            // عملية النسخ للحافظة
+            navigator.clipboard.writeText(fullLink).then(() => {
+                alert("✅ تم نسخ رابط المعلم: " + name + "\nيمكنك الآن لصقه وإرساله عبر الواتساب.");
+            }).catch(err => {
+                console.error('خطأ في النسخ:', err);
+                alert("فشل النسخ التلقائي، الرابط هو:\n" + fullLink);
+            });
+        }
+
         function deleteTeacher(id) {
-            if (confirm("هل أنت متأكد من حذف هذا المعلم؟")) {
-                database.ref('teachers/' + id).remove();
-            }
+            if (confirm("حذف المعلم؟")) database.ref('teachers/' + id).remove();
         }
     </script>
 </body>
