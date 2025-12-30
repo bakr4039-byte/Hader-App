@@ -14,14 +14,14 @@
         :root {
             --dark-navy: #34495e;
             --purple: #8e44ad;
-            --blue-save: #3498db;
+            --blue-admin: #3498db;
         }
         body { font-family: 'Tajawal', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
         
         .nav-header { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
         .btn-nav { padding: 10px 20px; border-radius: 8px; border: none; color: white; cursor: pointer; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .admin-page { background-color: var(--blue-admin); }
         .links-db { background-color: var(--dark-navy); }
-        .admin-page { background-color: var(--blue-save); }
 
         .report-card {
             background: white;
@@ -32,12 +32,8 @@
             box-shadow: 0 5px 25px rgba(0,0,0,0.1);
         }
 
-        .report-header {
-            text-align: center;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }
+        .report-header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .report-header h1 { color: var(--purple); display: flex; align-items: center; justify-content: center; gap: 10px; }
 
         .filter-section {
             display: flex;
@@ -46,39 +42,22 @@
             gap: 15px;
             margin-bottom: 30px;
             background: #f9f9f9;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
+            flex-wrap: wrap;
         }
 
-        select, button.btn-generate {
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            font-family: 'Tajawal';
-        }
+        select, .btn-generate { padding: 10px 15px; border-radius: 6px; border: 1px solid #ddd; font-family: 'Tajawal'; font-size: 16px; }
+        .btn-generate { background-color: var(--purple); color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-generate:hover { background-color: #732d91; }
 
-        .btn-generate {
-            background-color: var(--purple);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
+        .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background-color: #f2f2f2; padding: 12px; border: 1px solid #ddd; color: var(--dark-navy); }
-        td { padding: 12px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #f8f9fa; padding: 15px; border: 1px solid #eee; color: var(--dark-navy); }
+        td { padding: 12px; border: 1px solid #eee; text-align: center; }
 
-        .print-btn {
-            margin-top: 20px;
-            background-color: #27ae60;
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+        .delay-val { color: #e74c3c; font-weight: bold; }
+        .print-btn { margin-top: 25px; background-color: #27ae60; color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Tajawal'; }
 
         @media print {
             .nav-header, .filter-section, .print-btn { display: none; }
@@ -90,53 +69,60 @@
 <body>
 
     <div class="nav-header">
-        <a href="admin.html" class="btn-nav admin-page"><i class="fas fa-arrow-right"></i> العودة للرقابة</a>
-        <a href="links.html" class="btn-nav links-db"><i class="fas fa-paperclip"></i> الروابط المعتمدة</a>
+        <a href="admin.html" class="btn-nav admin-page"><i class="fas fa-arrow-right"></i> لوحة الإدارة</a>
+        <a href="links.html" class="btn-nav links-db"><i class="fas fa-paperclip"></i> إدارة الروابط</a>
     </div>
 
     <div class="report-card">
         <div class="report-header">
-            <h1><i class="fas fa-chart-pie" style="color: var(--purple);"></i> تقرير الحضور الشهري</h1>
-            <h3>ثانوية الصحافة</h3>
+            <h1><i class="fas fa-file-invoice"></i> تقرير الحضور الشهري</h1>
+            <h2 style="color: #7f8c8d;">ثانوية الصحافة</h2>
         </div>
 
         <div class="filter-section">
-            <label>اختر الشهر:</label>
+            <label>الشهر:</label>
             <select id="monthSelect">
                 <option value="01">يناير</option><option value="02">فبراير</option>
                 <option value="03">مارس</option><option value="04">أبريل</option>
                 <option value="05">مايو</option><option value="06">يونيو</option>
                 <option value="07">يوليو</option><option value="08">أغسطس</option>
                 <option value="09">سبتمبر</option><option value="10">أكتوبر</option>
-                <option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+                <option value="11" selected>نوفمبر</option><option value="12">ديسمبر</option>
             </select>
             <label>السنة:</label>
             <select id="yearSelect">
-                <option value="2025">2025</option>
+                <option value="2025" selected>2025</option>
                 <option value="2026">2026</option>
             </select>
-            <button class="btn-generate" onclick="generateReport()">عرض التقرير</button>
+            <button class="btn-generate" onclick="generateReport()">
+                <i class="fas fa-search"></i> استخراج التقرير
+            </button>
         </div>
 
-        <table id="reportTable">
-            <thead>
-                <tr>
-                    <th>اسم المعلم</th>
-                    <th>الرقم الوظيفي</th>
-                    <th>أيام الحضور</th>
-                    <th>إجمالي التأخير (دقيقة)</th>
-                    <th>ملاحظات</th>
-                </tr>
-            </thead>
-            <tbody id="reportBody">
-                <tr><td colspan="5">الرجاء اختيار الشهر والسنة واضغط عرض</td></tr>
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table id="reportTable">
+                <thead>
+                    <tr>
+                        <th>المعلم</th>
+                        <th>الرقم الوظيفي</th>
+                        <th>أيام الحضور</th>
+                        <th>إجمالي التأخير (د)</th>
+                        <th>إجمالي التكبير (د)</th>
+                    </tr>
+                </thead>
+                <tbody id="reportBody">
+                    <tr><td colspan="5" style="color:#95a5a6">اختر الشهر والسنة ثم اضغط استخراج</td></tr>
+                </tbody>
+            </table>
+        </div>
 
-        <button class="print-btn" onclick="window.print()"><i class="fas fa-print"></i> طباعة التقرير</button>
+        <button class="print-btn" onclick="window.print()">
+            <i class="fas fa-print"></i> طباعة التقرير (PDF)
+        </button>
     </div>
 
     <script>
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
@@ -153,56 +139,64 @@
             const month = document.getElementById('monthSelect').value;
             const year = document.getElementById('yearSelect').value;
             const reportBody = document.getElementById('reportBody');
-            reportBody.innerHTML = '<tr><td colspan="5">جاري تحليل البيانات...</td></tr>';
+            
+            reportBody.innerHTML = '<tr><td colspan="5">جاري تحليل السجلات...</td></tr>';
 
             database.ref('attendance').once('value', (snapshot) => {
                 const allData = snapshot.val();
                 if (!allData) {
-                    reportBody.innerHTML = '<tr><td colspan="5">لا توجد سجلات في النظام</td></tr>';
+                    reportBody.innerHTML = '<tr><td colspan="5">لا توجد بيانات حضور في النظام</td></tr>';
                     return;
                 }
 
-                let summary = {}; // لتجميع بيانات كل معلم
+                let summary = {}; 
 
-                // البحث في جميع التواريخ
-                for (let date in allData) {
-                    // فحص إذا كان التاريخ ينتمي للشهر والسنة المختارة (تنسيق DD-MM-YYYY)
-                    if (date.includes(`-${month}-${year}`)) {
-                        const dailyRecords = allData[date];
-                        for (let tId in dailyRecords) {
+                // مراجعة كل التواريخ المخزنة
+                Object.keys(allData).forEach(dateKey => {
+                    // فحص إذا كان التاريخ يطابق الشهر والسنة (تنسيقنا هو DD-MM-YYYY)
+                    if (dateKey.includes(`-${month}-${year}`)) {
+                        const dailyRecords = allData[dateKey];
+                        
+                        Object.keys(dailyRecords).forEach(tId => {
                             const record = dailyRecords[tId];
                             if (!summary[tId]) {
-                                summary[tId] = { name: record.name, days: 0, totalLate: 0 };
+                                summary[tId] = { 
+                                    name: record.name, 
+                                    days: 0, 
+                                    totalLate: 0,
+                                    totalEarly: 0
+                                };
                             }
                             summary[tId].days += 1;
-                            summary[tId].totalLate += (record.lateMins || 0);
-                        }
+                            summary[tId].totalLate += Number(record.lateMins || 0);
+                            summary[tId].totalEarly += Number(record.earlyMins || 0);
+                        });
                     }
-                }
+                });
 
-                displaySummary(summary);
+                displayResults(summary);
             });
         }
 
-        function displaySummary(summary) {
+        function displayResults(summary) {
             const reportBody = document.getElementById('reportBody');
             reportBody.innerHTML = "";
-            const keys = Object.keys(summary);
+            const ids = Object.keys(summary);
 
-            if (keys.length === 0) {
-                reportBody.innerHTML = '<tr><td colspan="5">لا توجد سجلات للشهر المختار</td></tr>';
+            if (ids.length === 0) {
+                reportBody.innerHTML = '<tr><td colspan="5">لم يتم العثور على سجلات لهذه الفترة</td></tr>';
                 return;
             }
 
-            keys.forEach(tId => {
-                const data = summary[tId];
+            ids.forEach(id => {
+                const data = summary[id];
                 const row = `
                     <tr>
-                        <td>${data.name}</td>
-                        <td>${tId}</td>
+                        <td><strong>${data.name}</strong></td>
+                        <td>${id}</td>
                         <td>${data.days}</td>
-                        <td style="color: ${data.totalLate > 0 ? 'red' : 'green'}">${data.totalLate}</td>
-                        <td>---</td>
+                        <td class="delay-val">${data.totalLate}</td>
+                        <td>${data.totalEarly}</td>
                     </tr>
                 `;
                 reportBody.innerHTML += row;
