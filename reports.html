@@ -1,36 +1,213 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>التقارير الشهرية - مجمع أبي بن كعب</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التقارير الشهرية - ثانوية الصحافة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        .rep-box { max-width: 1000px; margin: 20px auto; padding: 20px; background: white; border-radius: 15px; }
-        .filter { background: #f1f2f6; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border: 1px solid #eee; text-align: center; }
+        :root {
+            --dark-navy: #34495e;
+            --purple: #8e44ad;
+            --blue-save: #3498db;
+        }
+        body { font-family: 'Tajawal', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
+        
+        .nav-header { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
+        .btn-nav { padding: 10px 20px; border-radius: 8px; border: none; color: white; cursor: pointer; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .links-db { background-color: var(--dark-navy); }
+        .admin-page { background-color: var(--blue-save); }
+
+        .report-card {
+            background: white;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        }
+
+        .report-header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        select, button.btn-generate {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-family: 'Tajawal';
+        }
+
+        .btn-generate {
+            background-color: var(--purple);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background-color: #f2f2f2; padding: 12px; border: 1px solid #ddd; color: var(--dark-navy); }
+        td { padding: 12px; border: 1px solid #ddd; text-align: center; }
+
+        .print-btn {
+            margin-top: 20px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        @media print {
+            .nav-header, .filter-section, .print-btn { display: none; }
+            body { background-color: white; padding: 0; }
+            .report-card { box-shadow: none; width: 100%; max-width: 100%; }
+        }
     </style>
 </head>
 <body>
-    <div class="rep-box">
-        <header style="display:flex; justify-content:space-between; align-items:center;">
-            <h1>📊 تقارير الانضباط الشهري</h1>
-            <a href="admin.html" style="text-decoration:none; color:#3498db;">⬅️ العودة</a>
-        </header>
-        <div class="filter">
-            الشهر: <select id="m"><option value="01">يناير</option><option value="12" selected>ديسمبر</option></select>
-            السنة: <select id="y"><option value="2025" selected>2025</option></select>
-            <button onclick="runReport()" style="background:#2c3e50; color:white; padding:8px 20px; border-radius:5px; cursor:pointer;">توليد التقرير</button>
-            <button onclick="exportExcel()" style="background:#27ae60; color:white; padding:8px 20px; border-radius:5px; cursor:pointer;">📥 تصدير Excel</button>
-        </div>
-        <table id="rep-table">
-            <thead><tr><th>المعلم</th><th>أيام الحضور</th><th>إجمالي التأخير (د)</th><th>إجمالي الخروج المبكر</th><th>التقييم</th></tr></thead>
-            <tbody id="rep-body"></tbody>
-        </table>
+
+    <div class="nav-header">
+        <a href="admin.html" class="btn-nav admin-page"><i class="fas fa-arrow-right"></i> العودة للرقابة</a>
+        <a href="links.html" class="btn-nav links-db"><i class="fas fa-paperclip"></i> الروابط المعتمدة</a>
     </div>
-    <script src="reports-script.js"></script>
+
+    <div class="report-card">
+        <div class="report-header">
+            <h1><i class="fas fa-chart-pie" style="color: var(--purple);"></i> تقرير الحضور الشهري</h1>
+            <h3>ثانوية الصحافة</h3>
+        </div>
+
+        <div class="filter-section">
+            <label>اختر الشهر:</label>
+            <select id="monthSelect">
+                <option value="01">يناير</option><option value="02">فبراير</option>
+                <option value="03">مارس</option><option value="04">أبريل</option>
+                <option value="05">مايو</option><option value="06">يونيو</option>
+                <option value="07">يوليو</option><option value="08">أغسطس</option>
+                <option value="09">سبتمبر</option><option value="10">أكتوبر</option>
+                <option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+            </select>
+            <label>السنة:</label>
+            <select id="yearSelect">
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+            </select>
+            <button class="btn-generate" onclick="generateReport()">عرض التقرير</button>
+        </div>
+
+        <table id="reportTable">
+            <thead>
+                <tr>
+                    <th>اسم المعلم</th>
+                    <th>الرقم الوظيفي</th>
+                    <th>أيام الحضور</th>
+                    <th>إجمالي التأخير (دقيقة)</th>
+                    <th>ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody id="reportBody">
+                <tr><td colspan="5">الرجاء اختيار الشهر والسنة واضغط عرض</td></tr>
+            </tbody>
+        </table>
+
+        <button class="print-btn" onclick="window.print()"><i class="fas fa-print"></i> طباعة التقرير</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
+            authDomain: "hader-system.firebaseapp.com",
+            databaseURL: "https://hader-system-default-rtdb.firebaseio.com/", 
+            projectId: "hader-system",
+            storageBucket: "hader-system.firebasestorage.app",
+            messagingSenderId: "1039709774940",
+            appId: "1:1039709774940:web:078351fe5cb90593473299"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function generateReport() {
+            const month = document.getElementById('monthSelect').value;
+            const year = document.getElementById('yearSelect').value;
+            const reportBody = document.getElementById('reportBody');
+            reportBody.innerHTML = '<tr><td colspan="5">جاري تحليل البيانات...</td></tr>';
+
+            database.ref('attendance').once('value', (snapshot) => {
+                const allData = snapshot.val();
+                if (!allData) {
+                    reportBody.innerHTML = '<tr><td colspan="5">لا توجد سجلات في النظام</td></tr>';
+                    return;
+                }
+
+                let summary = {}; // لتجميع بيانات كل معلم
+
+                // البحث في جميع التواريخ
+                for (let date in allData) {
+                    // فحص إذا كان التاريخ ينتمي للشهر والسنة المختارة (تنسيق DD-MM-YYYY)
+                    if (date.includes(`-${month}-${year}`)) {
+                        const dailyRecords = allData[date];
+                        for (let tId in dailyRecords) {
+                            const record = dailyRecords[tId];
+                            if (!summary[tId]) {
+                                summary[tId] = { name: record.name, days: 0, totalLate: 0 };
+                            }
+                            summary[tId].days += 1;
+                            summary[tId].totalLate += (record.lateMins || 0);
+                        }
+                    }
+                }
+
+                displaySummary(summary);
+            });
+        }
+
+        function displaySummary(summary) {
+            const reportBody = document.getElementById('reportBody');
+            reportBody.innerHTML = "";
+            const keys = Object.keys(summary);
+
+            if (keys.length === 0) {
+                reportBody.innerHTML = '<tr><td colspan="5">لا توجد سجلات للشهر المختار</td></tr>';
+                return;
+            }
+
+            keys.forEach(tId => {
+                const data = summary[tId];
+                const row = `
+                    <tr>
+                        <td>${data.name}</td>
+                        <td>${tId}</td>
+                        <td>${data.days}</td>
+                        <td style="color: ${data.totalLate > 0 ? 'red' : 'green'}">${data.totalLate}</td>
+                        <td>---</td>
+                    </tr>
+                `;
+                reportBody.innerHTML += row;
+            });
+        }
+    </script>
 </body>
 </html>
