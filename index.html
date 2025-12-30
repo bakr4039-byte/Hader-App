@@ -2,34 +2,40 @@
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>نظام حاضر - مجمع أبي بن كعب</title>
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --secondary: #e67e22; --success: #27ae60; --bg: #f5f6fa; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; padding-top: 15px; }
+        .container { width: 95%; max-width: 450px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; text-align: center; }
+        header { background: var(--primary); color: white; padding: 15px; }
+        .btn-main { width: 90%; padding: 16px; margin: 8px 0; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
+        #map { height: 180px; margin: 15px auto; width: 90%; border-radius: 15px; border: 2px solid #eee; z-index: 1; }
+        .info-bar { font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 5px; margin-top: 10px; }
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>نظام حاضر الذكي 📍</h1>
-            <p id="current-time">--:--:--</p>
-            <div id="shift-info">دوام اليوم: حضور (<span id="set-start">--:--</span>) - انصراف (<span id="set-end">--:--</span>)</div>
+            <h2 style="margin:0">نظام حاضر الذكي 📍</h2>
+            <div id="current-time" style="font-size:1.3rem; margin:8px 0; font-weight:bold;">00:00:00</div>
+            <div class="info-bar">دوام اليوم: <span id="set-start">--:--</span> - <span id="set-end">--:--</span></div>
         </header>
-        <main class="card">
-            <div class="user-info">
-                <h3 id="display-name">جاري التعرف على المعلم...</h3>
-                <p>الرقم الوظيفي: <span id="display-id">---</span></p>
-            </div>
-            <div class="action-zone">
-                <button class="btn-main" onclick="processAttendance('حضور')" style="background:#2c3e50;">تسجيل حضور</button>
-                <button class="btn-main" onclick="processAttendance('انصراف')" style="background:#e67e22;">تسجيل انصراف</button>
-                <div id="map" style="height: 200px; margin-top: 15px; border-radius: 10px;"></div>
-                <p id="status-msg">يرجى السماح بالوصول للموقع (GPS)</p>
-            </div>
-        </main>
-        <div id="distance-info" style="text-align:center; margin-top:10px;">المسافة الحالية: ---</div>
+        <div style="padding: 15px;">
+            <h3 id="display-name" style="color:var(--primary); margin:5px 0;">جاري التعرف...</h3>
+            <p style="margin:0; color:#7f8c8d;">الرقم الوظيفي: <span id="display-id">---</span></p>
+            
+            <button class="btn-main" style="background:var(--primary)" onclick="processAttendance('حضور')">تسجيل حضور</button>
+            <button class="btn-main" style="background:var(--secondary)" onclick="processAttendance('انصراف')">تسجيل انصراف</button>
+            
+            <div id="map"></div>
+            <p id="status-msg" style="font-weight:bold; color:#7f8c8d; font-size:0.9rem;">يرجى تفعيل الـ GPS</p>
+            <div id="distance-info" style="font-size:0.8rem; color:var(--primary); font-weight:bold;">المسافة: ---</div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>

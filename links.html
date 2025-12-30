@@ -6,46 +6,47 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    <style>
+        .links-box { max-width: 900px; margin: 30px auto; background: white; padding: 25px; border-radius: 15px; text-align: center; }
+        input { padding: 12px; margin: 5px; border-radius: 8px; border: 1px solid #ddd; width: 200px; font-family: inherit; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; }
+        .btn-action { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔗 قاعدة بيانات الروابط</h1>
-        <div class="card">
-            <input type="text" id="t-name" placeholder="اسم المعلم">
-            <input type="text" id="t-id" placeholder="الرقم الوظيفي">
-            <button onclick="addTeacher()" style="background:#2c3e50; color:white;">إضافة للقاعدة</button>
+    <div class="links-box">
+        <h1>🔗 إدارة قاعدة بيانات الروابط المعتمدة</h1>
+        <div style="background:#f8f9fa; padding:15px; border-radius:10px;">
+            <input type="text" id="teacher-n" placeholder="اسم المعلم الرباعي">
+            <input type="text" id="teacher-i" placeholder="الرقم الوظيفي">
+            <button onclick="addNewTeacher()" style="background:#2c3e50; color:white; padding:12px 25px; border-radius:8px; border:none; cursor:pointer;">إضافة للقاعدة</button>
         </div>
         <table>
             <thead><tr><th>المعلم</th><th>الرقم الوظيفي</th><th>الإجراءات</th></tr></thead>
-            <tbody id="list-body"></tbody>
+            <tbody id="links-list"></tbody>
         </table>
-        <br><a href="admin.html">العودة للإدارة</a>
+        <br><a href="admin.html" style="color:#3498db; font-weight:bold; text-decoration:none;">⬅️ العودة للوحة الإدارة</a>
     </div>
     <script>
-        firebase.initializeApp({ /* نفس إعدادات Firebase أعلاه */ });
+        firebase.initializeApp({ /* نفس FirebaseConfig أعلاه */ });
         const db = firebase.database();
-        
-        function addTeacher() {
-            const name = document.getElementById('t-name').value;
-            const id = document.getElementById('t-id').value;
-            if(name && id) db.ref('teachers_list/' + id).set({ name, id });
+        function addNewTeacher() { 
+            const n = document.getElementById('teacher-n').value; 
+            const i = document.getElementById('teacher-i').value;
+            if(n && i) db.ref('teachers_list/' + i).set({ name: n, id: i }).then(() => {
+                document.getElementById('teacher-n').value = ""; document.getElementById('teacher-i').value = "";
+            });
         }
-
         db.ref('teachers_list').on('value', s => {
-            const body = document.getElementById('list-body');
-            body.innerHTML = "";
+            const list = document.getElementById('links-list'); list.innerHTML = "";
             let baseUrl = window.location.href.split('links.html')[0];
             const data = s.val();
             for(let key in data) {
-                const link = `${baseUrl}index.html?id=${data[key].id}&name=${encodeURIComponent(data[key].name)}`;
-                body.innerHTML += `<tr>
-                    <td>${data[key].name}</td>
-                    <td>${data[key].id}</td>
-                    <td>
-                        <button onclick="navigator.clipboard.writeText('${link}'); alert('تم النسخ')">نسخ</button>
-                        <button onclick="db.ref('teachers_list/${key}').remove()" style="background:red; color:white;">حذف</button>
-                    </td>
-                </tr>`;
+                const url = `${baseUrl}index.html?id=${data[key].id}&name=${encodeURIComponent(data[key].name)}`;
+                list.innerHTML += `<tr><td><b>${data[key].name}</b></td><td>${data[key].id}</td>
+                    <td><button class="btn-action" style="background:#3498db; color:white;" onclick="navigator.clipboard.writeText('${url}'); alert('تم نسخ الرابط السحابي بنجاح')">📋 نسخ الرابط</button>
+                    <button class="btn-action" style="background:#e74c3c; color:white; margin-right:5px;" onclick="db.ref('teachers_list/${key}').remove()">🗑️ حذف</button></td></tr>`;
             }
         });
     </script>

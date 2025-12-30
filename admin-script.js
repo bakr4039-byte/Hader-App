@@ -1,28 +1,24 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
-    authDomain: "hader-system.firebaseapp.com",
-    projectId: "hader-system",
-    storageBucket: "hader-system.firebasestorage.app",
-    messagingSenderId: "1039709774940",
-    appId: "1:1039709774940:web:078351fe5cb90593473299"
-};
-firebase.initializeApp(firebaseConfig);
+const firebaseConfig = { /* استخدم نفس إعدادات Firebase السابقة */ };
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
 function saveShift() {
     const start = document.getElementById('start-time').value;
     const end = document.getElementById('end-time').value;
-    if(start && end) database.ref('settings/workHours').set({ start, end });
+    if(start && end) {
+        database.ref('settings/workHours').set({ start, end });
+        alert("تم تحديث مواعيد الدوام بنجاح!");
+    }
 }
 
-database.ref('settings/workHours').once('value', s => {
+database.ref('settings/workHours').on('value', s => {
     if(s.val()) {
         document.getElementById('start-time').value = s.val().start;
-        document.getElementById('set-end').value = s.val().end;
+        document.getElementById('end-time').value = s.val().end;
     }
 });
 
-function loadData() {
+function loadTodayData() {
     const dateStr = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
     database.ref(`attendance/${dateStr}`).on('value', (snapshot) => {
         const data = snapshot.val();
@@ -34,15 +30,17 @@ function loadData() {
                 body.innerHTML += `
                     <tr>
                         <td><b>${r.name}</b><br><small>${id}</small></td>
-                        <td>${r.checkIn || '--'}</td>
-                        <td style="color:red">${r.lateMins || 0}</td>
-                        <td>${r.checkOut || '--'}</td>
-                        <td style="color:orange">${r.earlyMins || 0}</td>
-                        <td>${r.checkOut ? '✅ انصرف' : '⏳ موجود'}</td>
+                        <td>${r.checkIn || '--:--'}</td>
+                        <td style="color:red; font-weight:bold;">${r.lateMins || 0}</td>
+                        <td>${r.checkOut || '--:--'}</td>
+                        <td style="color:orange; font-weight:bold;">${r.earlyMins || 0}</td>
+                        <td>${r.checkOut ? '<span style="color:green">✅ انصرف</span>' : '<span style="color:blue">⏳ متواجد</span>'}</td>
                     </tr>`;
             }
+        } else {
+            body.innerHTML = "<tr><td colspan='6'>لا توجد سجلات لليوم حتى الآن.</td></tr>";
         }
     });
 }
 function logout() { sessionStorage.clear(); window.location.href="login.html"; }
-window.onload = loadData;
+window.onload = loadTodayData;
