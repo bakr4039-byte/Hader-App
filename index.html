@@ -1,42 +1,157 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام حاضر - مجمع أبي بن كعب</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الحضور - ثانوية الصحافة الأهلية</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        :root { --primary: #2c3e50; --secondary: #e67e22; --success: #27ae60; --bg: #f5f6fa; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; padding-top: 15px; }
-        .container { width: 95%; max-width: 450px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; text-align: center; }
-        header { background: var(--primary); color: white; padding: 15px; }
-        .btn-main { width: 90%; padding: 16px; margin: 8px 0; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
-        #map { height: 180px; margin: 15px auto; width: 90%; border-radius: 15px; border: 2px solid #eee; z-index: 1; }
-        .info-bar { font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 5px; margin-top: 10px; }
+        :root {
+            --primary-navy: #34495e;
+            --success-green: #27ae60;
+            --danger-red: #e74c3c;
+            --info-blue: #3498db;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .user-card {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .user-card h2 { margin: 10px 0; color: var(--primary-navy); }
+        .user-card p { color: #7f8c8d; font-size: 14px; margin: 5px 0; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        .info-box i { font-size: 20px; color: var(--info-blue); margin-bottom: 5px; }
+        .info-box span { display: block; font-weight: bold; font-size: 18px; }
+
+        #map {
+            height: 250px;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 15px;
+            border: 2px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .status-bar {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:active { transform: scale(0.95); }
+        .btn-in { background-color: var(--success-green); }
+        .btn-out { background-color: var(--primary-navy); }
+
+        #distance-info { font-size: 12px; color: #7f8c8d; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h2 style="margin:0">نظام حاضر الذكي 📍</h2>
-            <div id="current-time" style="font-size:1.3rem; margin:8px 0; font-weight:bold;">00:00:00</div>
-            <div class="info-bar">دوام اليوم: <span id="set-start">--:--</span> - <span id="set-end">--:--</span></div>
-        </header>
-        <div style="padding: 15px;">
-            <h3 id="display-name" style="color:var(--primary); margin:5px 0;">جاري التعرف...</h3>
-            <p style="margin:0; color:#7f8c8d;">الرقم الوظيفي: <span id="display-id">---</span></p>
-            
-            <button class="btn-main" style="background:var(--primary)" onclick="processAttendance('حضور')">تسجيل حضور</button>
-            <button class="btn-main" style="background:var(--secondary)" onclick="processAttendance('انصراف')">تسجيل انصراف</button>
-            
-            <div id="map"></div>
-            <p id="status-msg" style="font-weight:bold; color:#7f8c8d; font-size:0.9rem;">يرجى تفعيل الـ GPS</p>
-            <div id="distance-info" style="font-size:0.8rem; color:var(--primary); font-weight:bold;">المسافة: ---</div>
+
+    <div class="user-card">
+        <h2 id="display-name">جاري تحميل الاسم...</h2>
+        <p>الرقم الوظيفي: <span id="display-id">--</span></p>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-box">
+            <i class="far fa-clock"></i>
+            <p>الوقت الآن</p>
+            <span id="current-time">00:00:00</span>
+        </div>
+        <div class="info-box">
+            <i class="fas fa-history"></i>
+            <p>بداية الدوام</p>
+            <span id="set-start">--:--</span>
         </div>
     </div>
+
+    <div id="map"></div>
+    <div id="distance-info">جاري تحديد المسافة...</div>
+    <div id="status-msg" class="status-bar">جاري فحص الموقع...</div>
+
+    <div class="action-buttons">
+        <button class="btn btn-in" onclick="processAttendance('حضور')">
+            <i class="fas fa-sign-in-alt"></i>
+            تسجيل حضور
+        </button>
+        <button class="btn btn-out" onclick="processAttendance('انصراف')">
+            <i class="fas fa-sign-out-alt"></i>
+            تسجيل انصراف
+        </button>
+    </div>
+
     <script src="script.js"></script>
+
 </body>
 </html>
