@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>دخول المدير - نظام حاضر</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh;">
+    <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px;">
+        <h2>قفل الإدارة 🔒</h2>
+        <input type="password" id="pass" placeholder="كلمة المرور" style="width: 100%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px;">
+        <button onclick="login()" style="width: 100%; padding: 12px; background: #2c3e50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">دخول</button>
+        <p id="err" style="color:red; display:none; margin-top:10px;">خطأ في كلمة المرور!</p>
+    </div>
+    <script>
+        function login() {
+            if(document.getElementById('pass').value === "123456") {
+                sessionStorage.setItem('isAdmin', 'true');
+                window.location.href = "admin.html";
+            } else { document.getElementById('err').style.display='block'; }
+        }
+    </script>
+</body>
+</html>

@@ -2,51 +2,95 @@
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة الإدارة - نظام حاضر</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة مجمع أبي بن كعب - لوحة الرقابة</title>
+    
+    <script>
+        if (sessionStorage.getItem('isAdmin') !== 'true') {
+            window.location.href = "login.html";
+        }
+    </script>
+
     <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
     <style>
-        .admin-container { max-width: 900px; margin: auto; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        th, td { padding: 15px; text-align: right; border-bottom: 1px solid #eee; }
-        th { background-color: #2c3e50; color: white; }
-        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; color: white; }
-        .bg-green { background: #27ae60; }
-        .nav-links { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .nav-links a { text-decoration: none; color: #3498db; font-weight: bold; }
-        .btn-clear { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+        .admin-container { max-width: 1200px; margin: auto; padding: 20px; }
+        
+        /* تنسيق الأزرار العلوي */
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 10px; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        .btn { padding: 10px 18px; border-radius: 8px; cursor: pointer; border: none; color: white; font-weight: bold; font-family: inherit; font-size: 0.9rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        
+        .btn-excel { background: #27ae60; }
+        .btn-reports { background: #8e44ad; } /* لون أرجواني للتقارير */
+        .btn-logout { background: #95a5a6; }
+
+        /* تنسيق إعدادات الدوام */
+        .settings-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; border: 1px solid #edf2f7; }
+        .settings-card input { padding: 8px; border-radius: 6px; border: 1px solid #cbd5e0; }
+        .btn-save { background: #3498db; color: white; padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+
+        /* تنسيق الجدول والبحث */
+        .search-box { width: 100%; padding: 15px; margin-bottom: 20px; border: 2px solid #e2e8f0; border-radius: 10px; outline: none; font-size: 1rem; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        th { background: #2c3e50; color: white; }
+        
+        /* الحالات الملونة */
+        .badge-red { background: #ff4757; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+        .badge-green { background: #2ed573; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+        .badge-warn { background: #ffa502; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
     </style>
 </head>
 <body>
+
     <div class="admin-container">
-        <header>
-            <h1>لوحة تحكم المدير 🖥️</h1>
-            <div class="nav-links">
-                <a href="index.html">⬅️ عودة لصفحة البصمة</a>
-                <button class="btn-clear" onclick="clearLogs()">مسح السجلات</button>
+        <header class="header-actions">
+            <h1>لوحة الرقابة الذكية 🏢</h1>
+            <div class="btn-group">
+                <button class="btn btn-excel" onclick="exportToExcel()">📊 تصدير Excel</button>
+                <a href="reports.html" class="btn btn-reports">📈 التقارير الشهرية</a>
+                <button class="btn btn-logout" onclick="logout()">🔓 خروج</button>
             </div>
         </header>
 
-        <section class="stats-grid">
-            <div class="stat-box green">إجمالي التحضير: <span id="total-present">0</span></div>
-            <div class="stat-box yellow">آخر تحديث: <span id="last-update">--</span></div>
-        </section>
+        <div class="settings-card">
+            <strong>🕒 إعدادات وقت الدوام:</strong>
+            <label>الحضور:</label>
+            <input type="time" id="set-work-start">
+            <label>الانصراف:</label>
+            <input type="time" id="set-work-end">
+            <button class="btn-save" onclick="saveHours()">حفظ المواعيد</button>
+            <span id="save-status" style="color: #27ae60; font-size: 0.8rem;"></span>
+        </div>
 
-        <br>
-        <h3>سجل الحضور المباشر</h3>
+        <input type="text" id="search" class="search-box" placeholder="🔍 ابحث عن معلم أو رقم وظيفي في سجلات اليوم..." onkeyup="filterTable()">
+
         <table>
             <thead>
                 <tr>
-                    <th>الاسم</th>
+                    <th>المعلم</th>
                     <th>الرقم الوظيفي</th>
                     <th>وقت الحضور</th>
-                    <th>التاريخ</th>
+                    <th>تأخير (د)</th>
+                    <th>وقت الانصراف</th>
+                    <th>مبكر (د)</th>
                     <th>الحالة</th>
                 </tr>
             </thead>
-            <tbody id="admin-table-body">
-                </tbody>
+            <tbody id="table-body">
+                <tr><td colspan="7">جاري جلب البيانات من السحابة...</td></tr>
+            </tbody>
         </table>
     </div>
+
     <script src="admin-script.js"></script>
 </body>
 </html>

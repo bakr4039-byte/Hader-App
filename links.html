@@ -1,0 +1,19 @@
+function generateLink() {
+    const name = document.getElementById('t-name').value;
+    const id = document.getElementById('t-id').value;
+    if(!name || !id) return alert("يرجى إكمال البيانات");
+    
+    // هذا السطر سيجلب رابط موقعك على GitHub تلقائياً
+    // وسيعمل حتى لو نقلت الملفات من جهاز لآخر
+    let baseUrl = window.location.href.split('links.html')[0];
+    
+    // إذا كنت تشغل الملف من الفلاشة، سننبهك
+    if(baseUrl.startsWith('file://')) {
+        alert("تنبيه: أنت تعمل حالياً من الفلاشة. الرابط الناتج لن يعمل عند المعلمين إلا بعد رفع الملفات إلى GitHub.");
+    }
+
+    const finalUrl = `${baseUrl}index.html?id=${id}&name=${encodeURIComponent(name)}`;
+    
+    document.getElementById('final-url').innerText = finalUrl;
+    document.getElementById('link-display').style.display = 'block';
+}
