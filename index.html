@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام حاضر - بوابة المعلم</title>
+    <title>نظام حاضر - مجمع أبي بن كعب</title>
     <link rel="stylesheet" href="style.css">
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 </head>
@@ -17,7 +15,7 @@
         <header>
             <h1>نظام حاضر الذكي 📍</h1>
             <p id="current-time">--:--:--</p>
-            <div id="shift-info" style="font-size: 0.8rem; color: #34495e; background: #ecf0f1; padding: 5px; border-radius: 5px; margin-top: 5px;">
+            <div id="shift-info" style="font-size: 0.8rem; background: #f1f2f6; padding: 5px; border-radius: 5px;">
                 دوام اليوم: حضور (<span id="set-start">--:--</span>) - انصراف (<span id="set-end">--:--</span>)
             </div>
         </header>
@@ -29,19 +27,14 @@
             </div>
 
             <div class="action-zone">
-                <button id="check-in-btn" class="btn-main" onclick="processAttendance('حضور')" style="background: #2c3e50; color: white; width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-bottom: 12px;">تسجيل حضور</button>
-                <button id="check-out-btn" class="btn-main" onclick="processAttendance('انصراف')" style="background: #e67e22; color: white; width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 1.1rem; font-weight: bold; cursor: pointer;">تسجيل انصراف</button>
+                <button class="btn-main" onclick="processAttendance('حضور')" style="background:#2c3e50; color:white; width:100%; padding:15px; border-radius:12px; border:none; margin-bottom:10px; cursor:pointer;">تسجيل حضور</button>
+                <button class="btn-main" onclick="processAttendance('انصراف')" style="background:#e67e22; color:white; width:100%; padding:15px; border-radius:12px; border:none; cursor:pointer;">تسجيل انصراف</button>
                 
-                <div id="map" style="height: 180px; margin-top: 15px; border-radius: 10px; border: 2px solid #ddd; z-index: 1;"></div>
-                
-                <p id="status-msg" style="margin-top: 15px; font-weight: bold; color: #7f8c8d;">يرجى تفعيل الـ GPS لرؤية موقعك</p>
+                <div id="map" style="height: 180px; margin-top: 15px; border-radius: 10px; border: 1px solid #ddd;"></div>
+                <p id="status-msg" style="margin-top: 10px; font-weight: bold; color: #7f8c8d;">يرجى تفعيل الـ GPS</p>
             </div>
         </main>
-
-        <section class="stats-grid" style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-            <div style="background: #27ae60; color: white; padding: 10px; border-radius: 8px; flex: 1; text-align: center; font-size: 0.8rem;">نطاق البصمة: 50 متر</div>
-            <div id="distance-info" style="background: #3498db; color: white; padding: 10px; border-radius: 8px; flex: 1; text-align: center; font-size: 0.8rem;">المسافة: ---</div>
-        </section>
+        <div id="distance-info" style="text-align:center; margin-top:10px; font-size:0.9rem; color:#2980b9;">المسافة: ---</div>
     </div>
     <script src="script.js"></script>
 </body>
