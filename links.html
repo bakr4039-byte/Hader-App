@@ -1,62 +1,51 @@
-<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <title>إدارة روابط المعلمين - مجمع أبي بن كعب</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
-    <style>
-        .links-box { max-width: 900px; margin: 30px auto; background: white; padding: 25px; border-radius: 15px; text-align: center; }
-        input { padding: 12px; margin: 5px; border-radius: 8px; border: 1px solid #ddd; width: 200px; font-family: inherit; }
-        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
-        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; }
-        .btn-action { padding: 6px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="links-box">
-        <h1>🔗 إدارة قاعدة بيانات الروابط المعتمدة</h1>
-        <div style="background:#f8f9fa; padding:15px; border-radius:10px;">
-            <input type="text" id="teacher-n" placeholder="اسم المعلم الرباعي">
-            <input type="text" id="teacher-i" placeholder="الرقم الوظيفي">
-            <button onclick="addNewTeacher()" style="background:#2c3e50; color:white; padding:12px 25px; border-radius:8px; border:none; cursor:pointer;">إضافة للقاعدة</button>
-        </div>
-        <table>
-            <thead><tr><th>المعلم</th><th>الرقم الوظيفي</th><th>الإجراءات</th></tr></thead>
-            <tbody id="links-list"></tbody>
-        </table>
-        <br><a href="admin.html" style="color:#3498db; font-weight:bold; text-decoration:none;">⬅️ العودة للوحة الإدارة</a>
-    </div>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
-            authDomain: "hader-system.firebaseapp.com",
-            projectId: "hader-system",
-            storageBucket: "hader-system.firebasestorage.app",
-            messagingSenderId: "1039709774940",
-            appId: "1:1039709774940:web:078351fe5cb90593473299"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        function addNewTeacher() { 
-            const n = document.getElementById('teacher-n').value; 
-            const i = document.getElementById('teacher-i').value;
-            if(n && i) db.ref('teachers_list/' + i).set({ name: n, id: i }).then(() => {
-                document.getElementById('teacher-n').value = ""; document.getElementById('teacher-i').value = "";
-            });
-        }
-        db.ref('teachers_list').on('value', s => {
-            const list = document.getElementById('links-list'); list.innerHTML = "";
-            let baseUrl = window.location.href.split('links.html')[0];
-            const data = s.val();
-            for(let key in data) {
-                const url = `${baseUrl}index.html?id=${data[key].id}&name=${encodeURIComponent(data[key].name)}`;
-                list.innerHTML += `<tr><td><b>${data[key].name}</b></td><td>${data[key].id}</td>
-                    <td><button class="btn-action" style="background:#3498db; color:white;" onclick="navigator.clipboard.writeText('${url}'); alert('تم نسخ الرابط السحابي بنجاح')">📋 نسخ الرابط</button>
-                    <button class="btn-action" style="background:#e74c3c; color:white; margin-right:5px;" onclick="db.ref('teachers_list/${key}').remove()">🗑️ حذف</button></td></tr>`;
-            }
+<script>
+    // إعدادات Firebase الخاصة بك
+    const firebaseConfig = {
+        apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
+        authDomain: "hader-system.firebaseapp.com",
+        databaseURL: "https://hader-system-default-rtdb.firebaseio.com/", 
+        projectId: "hader-system",
+        storageBucket: "hader-system.firebasestorage.app",
+        messagingSenderId: "1039709774940",
+        appId: "1:1039709774940:web:078351fe5cb90593473299"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    function addTeacher() {
+        const name = document.getElementById('tName').value;
+        const id = document.getElementById('tID').value;
+        if(!name || !id) return alert("يرجى إكمال البيانات");
+
+        // الحفظ في Firebase في نود تسمى teachers
+        database.ref('teachers/' + id).set({
+            name: name,
+            id: id
+        }).then(() => {
+            alert("تمت الإضافة لقاعدة البيانات السحابية بنجاح");
+            document.getElementById('tName').value = '';
+            document.getElementById('tID').value = '';
         });
-    </script>
-</body>
-</html>
+    }
+
+    // جلب القائمة لعرضها وحذفها
+    database.ref('teachers').on('value', (snapshot) => {
+        const list = snapshot.val();
+        const tableBody = document.getElementById('teacherTable');
+        tableBody.innerHTML = "";
+        for (let id in list) {
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${list[id].name}</td>
+                    <td>${id}</td>
+                    <td><button class="btn-delete" onclick="deleteTeacher('${id}')"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+        }
+    });
+
+    function deleteTeacher(id) {
+        if(confirm("هل أنت متأكد من حذف هذا المعلم؟")) {
+            database.ref('teachers/' + id).remove();
+        }
+    }
+</script>
