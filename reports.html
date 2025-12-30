@@ -3,50 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>التقارير - ثانوية الصحافة</title>
+    <title>التقارير الشهرية - ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        body { font-family: 'Tajawal', sans-serif; background-color: #f4f7f6; padding: 20px; }
-        .report-container { background: white; max-width: 900px; margin: auto; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
-        .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; background: #f9f9f9; padding: 15px; border-radius: 10px; }
-        select, button { padding: 10px; border-radius: 5px; border: 1px solid #ddd; font-family: 'Tajawal'; }
-        button { background: #8e44ad; color: white; border: none; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
-        th { background: #f8f9fa; }
-        .absent-cell { color: #e74c3c; font-weight: bold; }
+        :root {
+            --dark-navy: #34495e;
+            --purple: #8e44ad;
+            --blue-admin: #3498db;
+            --danger: #e74c3c;
+            --success: #27ae60;
+        }
+        body { font-family: 'Tajawal', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #2c3e50; }
+        
+        /* شريط التنقل */
+        .nav-header { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
+        .btn-nav { padding: 10px 20px; border-radius: 8px; border: none; color: white; cursor: pointer; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-nav:hover { transform: translateY(-2px); opacity: 0.9; }
+        .admin-page { background-color: var(--blue-admin); }
+        .links-db { background-color: var(--dark-navy); }
+
+        .report-card { background: white; max-width: 1000px; margin: 0 auto; padding: 30px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
+        .report-header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .report-header h1 { color: var(--purple); margin: 0; }
+        .report-header p { color: #7f8c8d; font-size: 18px; margin: 10px 0 0; }
+
+        /* قسم الفلترة */
+        .filter-section { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 30px; background: #f9f9f9; padding: 20px; border-radius: 10px; flex-wrap: wrap; border: 1px solid #eee; }
+        select, .btn-generate { padding: 10px 15px; border-radius: 6px; border: 1px solid #ddd; font-family: 'Tajawal'; font-size: 16px; outline: none; }
+        .btn-generate { background-color: var(--purple); color: white; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+
+        /* الجدول */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background-color: #f8f9fa; padding: 15px; border: 1px solid #eee; color: var(--dark-navy); font-weight: bold; }
+        td { padding: 12px; border: 1px solid #eee; text-align: center; }
+        tr:nth-child(even) { background-color: #fafafa; }
+        
+        .val-late { color: var(--danger); font-weight: bold; }
+        .val-absent { background: #fee2e2; color: var(--danger); font-weight: bold; border-radius: 4px; padding: 2px 8px; }
+        .val-present { color: var(--success); font-weight: bold; }
+
+        .print-btn { margin-top: 30px; background-color: var(--success); color: white; border: none; padding: 12px 35px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Tajawal'; font-size: 16px; display: block; margin-left: auto; margin-right: auto; }
+
+        @media print {
+            .nav-header, .filter-section, .print-btn { display: none; }
+            body { background-color: white; padding: 0; }
+            .report-card { box-shadow: none; width: 100%; max-width: 100%; border: none; }
+            table { font-size: 12px; }
+        }
     </style>
 </head>
 <body>
-    <div class="report-container">
-        <div class="header">
-            <h1 style="color:#8e44ad">تقرير الحضور والغياب الشهري</h1>
-            <h2>ثانوية الصحافة</h2>
+
+    <div class="nav-header">
+        <a href="admin.html" class="btn-nav admin-page"><i class="fas fa-arrow-right"></i> لوحة الإدارة</a>
+        <a href="links.html" class="btn-nav links-db"><i class="fas fa-paperclip"></i> إدارة الروابط</a>
+    </div>
+
+    <div class="report-card">
+        <div class="report-header">
+            <h1><i class="fas fa-file-invoice-dollar"></i> تقرير الأداء الشهري</h1>
+            <p>ثانوية الصحافة الأهلية</p>
         </div>
-        <div class="controls">
-            الشهر: <select id="m"><option value="12">ديسمبر</option><option value="11">نوفمبر</option></select>
-            السنة: <select id="y"><option value="2025">2025</option></select>
-            <button onclick="getReport()">استخراج التقرير</button>
+
+        <div class="filter-section">
+            <label>اختر الفترة:</label>
+            <select id="monthSelect">
+                <option value="01">يناير</option><option value="02">فبراير</option>
+                <option value="03">مارس</option><option value="04">أبريل</option>
+                <option value="05">مايو</option><option value="06">يونيو</option>
+                <option value="07">يوليو</option><option value="08">أغسطس</option>
+                <option value="09">سبتمبر</option><option value="10">أكتوبر</option>
+                <option value="11">نوفمبر</option><option value="12" selected>ديسمبر</option>
+            </select>
+            <select id="yearSelect">
+                <option value="2025" selected>2025</option>
+                <option value="2026">2026</option>
+            </select>
+            <button class="btn-generate" onclick="generateDetailedReport()">
+                <i class="fas fa-sync-alt"></i> تحديث البيانات
+            </button>
         </div>
-        <table id="resTable">
-            <thead>
-                <tr>
-                    <th>المعلم</th>
-                    <th>أيام الحضور</th>
-                    <th>أيام الغياب</th>
-                    <th>إجمالي التأخير (د)</th>
-                </tr>
-            </thead>
-            <tbody id="resBody"></tbody>
-        </table>
-        <button style="background:#27ae60; margin-top:20px" onclick="window.print()">طباعة التقرير</button>
+
+        <div class="table-container">
+            <table id="reportTable">
+                <thead>
+                    <tr>
+                        <th>المعلم</th>
+                        <th>الرقم الوظيفي</th>
+                        <th>أيام الحضور</th>
+                        <th>أيام الغياب</th>
+                        <th>إجمالي التأخير (د)</th>
+                        <th>إجمالي التبكير (د)</th>
+                    </tr>
+                </thead>
+                <tbody id="reportBody">
+                    <tr><td colspan="6" style="color:#95a5a6">اختر الشهر والسنة ثم اضغط تحديث</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button class="print-btn" onclick="window.print()">
+            <i class="fas fa-print"></i> طباعة التقرير (PDF)
+        </button>
     </div>
 
     <script>
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
@@ -59,30 +127,68 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        function getReport() {
-            const m = document.getElementById('m').value;
-            const y = document.getElementById('y').value;
-            database.ref('attendance').once('value', s => {
-                const all = s.val();
-                let results = {};
-                for (let date in all) {
-                    if (date.includes(`-${m}-${y}`)) {
-                        for (let id in all[date]) {
-                            const r = all[date][id];
-                            if (!results[id]) results[id] = { name: r.name, present: 0, absent: 0, late: 0 };
-                            if (r.inStatus === "غائب") results[id].absent++;
-                            else { results[id].present++; results[id].late += (r.lateMins || 0); }
+        function generateDetailedReport() {
+            const m = document.getElementById('monthSelect').value;
+            const y = document.getElementById('yearSelect').value;
+            const reportBody = document.getElementById('reportBody');
+            
+            reportBody.innerHTML = '<tr><td colspan="6">جاري جلب البيانات وتحليلها...</td></tr>';
+
+            // جلب الحضور
+            database.ref('attendance').once('value', (snapshot) => {
+                const allAttendance = snapshot.val();
+                let summary = {}; 
+
+                if (allAttendance) {
+                    Object.keys(allAttendance).forEach(date => {
+                        // فلترة التاريخ حسب الشهر والسنة المختارة
+                        if (date.includes(`-${m}-${y}`)) {
+                            const dailyData = allAttendance[date];
+                            Object.keys(dailyData).forEach(tId => {
+                                const rec = dailyData[tId];
+                                if (!summary[tId]) {
+                                    summary[tId] = { name: rec.name, present: 0, absent: 0, late: 0, early: 0 };
+                                }
+                                
+                                if (rec.inStatus === "غائب") {
+                                    summary[tId].absent += 1;
+                                } else {
+                                    summary[tId].present += 1;
+                                    summary[tId].late += Number(rec.lateMins || 0);
+                                    summary[tId].early += Number(rec.earlyMins || 0);
+                                }
+                            });
                         }
-                    }
+                    });
                 }
-                const body = document.getElementById('resBody');
-                body.innerHTML = Object.keys(results).map(id => `
+
+                renderTable(summary);
+            });
+        }
+
+        function renderTable(summary) {
+            const reportBody = document.getElementById('reportBody');
+            reportBody.innerHTML = "";
+            const keys = Object.keys(summary);
+
+            if (keys.length === 0) {
+                reportBody.innerHTML = '<tr><td colspan="6">لم يتم العثور على سجلات لهذه الفترة</td></tr>';
+                return;
+            }
+
+            keys.forEach(id => {
+                const data = summary[id];
+                const row = `
                     <tr>
-                        <td>${results[id].name}</td>
-                        <td>${results[id].present}</td>
-                        <td class="absent-cell">${results[id].absent}</td>
-                        <td>${results[id].late}</td>
-                    </tr>`).join('');
+                        <td><strong>${data.name}</strong></td>
+                        <td>${id}</td>
+                        <td class="val-present">${data.present}</td>
+                        <td class="val-absent">${data.absent}</td>
+                        <td class="${data.late > 0 ? 'val-late' : ''}">${data.late}</td>
+                        <td>${data.early}</td>
+                    </tr>
+                `;
+                reportBody.innerHTML += row;
             });
         }
     </script>
