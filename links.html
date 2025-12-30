@@ -14,52 +14,64 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
 
     <style>
-        .management-container { max-width: 1000px; margin: auto; padding: 20px; }
-        .form-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 30px; text-align: center; }
-        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 250px; margin: 5px; font-family: inherit; }
-        .btn-add { background: #2c3e50; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .links-manager { max-width: 1000px; margin: 30px auto; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .add-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 30px; text-align: center; }
+        .input-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
+        input { padding: 12px; border: 2px solid #edf2f7; border-radius: 10px; width: 220px; outline: none; transition: 0.3s; }
+        input:focus { border-color: #3498db; }
         
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-top: 20px; }
-        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
-        th { background: #34495e; color: white; }
+        .btn-save { background: #2c3e50; color: white; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; }
         
-        .btn-copy { background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
-        .btn-delete { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
-        .btn-copy:hover, .btn-delete:hover { opacity: 0.8; }
+        .teachers-list { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        th { background: #f8fafc; color: #64748b; font-size: 0.9rem; }
         
-        .empty-msg { padding: 30px; color: #95a5a6; }
+        .action-btn { padding: 8px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 0.85rem; margin: 2px; }
+        .btn-copy { background: #3498db; color: white; }
+        .btn-del { background: #fee2e2; color: #ef4444; }
+        .btn-copy:hover { background: #2980b9; }
+        .btn-del:hover { background: #fecaca; }
+
+        .link-text { font-size: 0.75rem; color: #94a3b8; display: block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<div class="management-container">
+<div class="links-manager">
     <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h1>🔗 قاعدة بيانات روابط المعلمين</h1>
+        <h1>🔗 قاعدة بيانات الروابط</h1>
         <a href="admin.html" style="text-decoration: none; color: #3498db; font-weight: bold;">⬅️ العودة للوحة الإدارة</a>
     </header>
 
-    <div class="form-card">
+    <div class="add-card">
         <h3>تسجيل معلم جديد وتوليد رابط</h3>
-        <input type="text" id="teacher-name" placeholder="اسم المعلم">
-        <input type="text" id="teacher-id" placeholder="الرقم الوظيفي">
-        <button class="btn-add" onclick="saveAndGenerate()">إضافة وحفظ</button>
+        <div class="input-group">
+            <input type="text" id="t-name" placeholder="اسم المعلم الرباعي">
+            <input type="text" id="t-id" placeholder="الرقم الوظيفي">
+            <button class="btn-save" onclick="addTeacher()">إضافة للقاعدة</button>
+        </div>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>اسم المعلم</th>
-                <th>الرقم الوظيفي</th>
-                <th>الإجراءات</th>
-            </tr>
-        </thead>
-        <tbody id="teachers-table-body">
+    <div class="teachers-list">
+        <table>
+            <thead>
+                <tr>
+                    <th>المعلم</th>
+                    <th>الرقم الوظيفي</th>
+                    <th>الرابط الخاص</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="list-body">
+                <tr><td colspan="4">جاري تحميل قاعدة البيانات...</td></tr>
             </tbody>
-    </table>
+        </table>
+    </div>
 </div>
 
 <script>
-    // 1. إعدادات Firebase
+    // إعدادات Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
       authDomain: "hader-system.firebaseapp.com",
@@ -72,67 +84,68 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // 2. دالة حفظ بيانات المعلم وتوليد الرابط
-    function saveAndGenerate() {
-        const name = document.getElementById('teacher-name').value;
-        const id = document.getElementById('teacher-id').value;
+    // 1. إضافة معلم جديد للقاعدة
+    function addTeacher() {
+        const name = document.getElementById('t-name').value;
+        const id = document.getElementById('t-id').value;
 
-        if (!name || !id) return alert("يرجى إدخال الاسم والرقم الوظيفي");
+        if (!name || !id) return alert("يرجى تعبئة البيانات كاملة");
 
-        // حفظ البيانات في فرع جديد اسمه 'teachers_list'
-        database.ref('teachers_list/' + id).set({
+        database.ref('teachers_database/' + id).set({
             name: name,
             id: id,
-            createdAt: new Date().toISOString()
+            dateAdded: new Date().toLocaleDateString()
         }).then(() => {
-            alert("تم حفظ المعلم في قاعدة البيانات بنجاح");
-            document.getElementById('teacher-name').value = "";
-            document.getElementById('teacher-id').value = "";
-        }).catch(err => alert("خطأ في الحفظ: " + err));
-    }
-
-    // 3. الاستماع المباشر لقائمة المعلمين وعرضها في الجدول
-    database.ref('teachers_list').on('value', (snapshot) => {
-        const data = snapshot.val();
-        const tbody = document.getElementById('teachers-table-body');
-        tbody.innerHTML = "";
-
-        if (data) {
-            // الحصول على الرابط الأساسي للموقع
-            let baseUrl = window.location.href.split('links.html')[0];
-            
-            for (let id in data) {
-                const teacher = data[id];
-                const finalLink = `${baseUrl}index.html?id=${id}&name=${encodeURIComponent(teacher.name)}`;
-
-                const row = `
-                    <tr>
-                        <td><b>${teacher.name}</b></td>
-                        <td>${id}</td>
-                        <td>
-                            <button class="btn-copy" onclick="copyLink('${finalLink}')">📋 نسخ الرابط</button>
-                            <button class="btn-delete" onclick="deleteTeacher('${id}')">🗑️ حذف</button>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            }
-        } else {
-            tbody.innerHTML = "<tr><td colspan='3' class='empty-msg'>لا يوجد معلمين مسجلين حالياً</td></tr>";
-        }
-    });
-
-    // 4. دالة نسخ الرابط
-    function copyLink(link) {
-        navigator.clipboard.writeText(link).then(() => {
-            alert("تم نسخ الرابط! يمكنك الآن لصقه في واتساب المعلم.");
+            alert("تمت الإضافة بنجاح");
+            document.getElementById('t-name').value = "";
+            document.getElementById('t-id').value = "";
         });
     }
 
-    // 5. دالة حذف معلم
+    // 2. عرض القائمة وحساب الروابط تلقائياً
+    database.ref('teachers_database').on('value', (snapshot) => {
+        const data = snapshot.val();
+        const body = document.getElementById('list-body');
+        body.innerHTML = "";
+
+        if (data) {
+            // الحصول على الرابط الأساسي الحالي (سواء كان GitHub أو محلي)
+            let baseUrl = window.location.href.split('links.html')[0];
+            
+            for (let key in data) {
+                const teacher = data[key];
+                const finalUrl = `${baseUrl}index.html?id=${teacher.id}&name=${encodeURIComponent(teacher.name)}`;
+
+                body.innerHTML += `
+                    <tr>
+                        <td><b>${teacher.name}</b></td>
+                        <td><code>${teacher.id}</code></td>
+                        <td>
+                            <span class="link-text">${finalUrl}</span>
+                        </td>
+                        <td>
+                            <button class="action-btn btn-copy" onclick="copyLink('${finalUrl}')">📋 نسخ</button>
+                            <button class="action-btn btn-del" onclick="deleteTeacher('${teacher.id}')">🗑️ حذف</button>
+                        </td>
+                    </tr>
+                `;
+            }
+        } else {
+            body.innerHTML = "<tr><td colspan='4' style='padding:40px; color:#94a3b8;'>لا يوجد معلمون مسجلون في القاعدة</td></tr>";
+        }
+    });
+
+    // 3. دالة نسخ الرابط
+    function copyLink(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            alert("تم نسخ رابط البصمة بنجاح! يمكنك إرساله الآن.");
+        });
+    }
+
+    // 4. دالة حذف معلم من القاعدة
     function deleteTeacher(id) {
-        if (confirm("هل أنت متأكد من حذف هذا المعلم ورابطه نهائياً؟")) {
-            database.ref('teachers_list/' + id).remove();
+        if (confirm("هل أنت متأكد من حذف هذا المعلم؟ لن يتمكن من تسجيل الحضور بهذا الرابط مجدداً.")) {
+            database.ref('teachers_database/' + id).remove();
         }
     }
 </script>
