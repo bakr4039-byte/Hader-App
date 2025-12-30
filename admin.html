@@ -19,37 +19,54 @@
         }
         body { font-family: 'Tajawal', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
         
-        /* شريط التنقل */
+        /* شريط التنقل العلوي */
         .nav-header { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
         .btn-nav { padding: 10px 25px; border-radius: 8px; border: none; color: white; cursor: pointer; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 16px; transition: 0.3s; }
         .btn-nav:hover { opacity: 0.8; transform: translateY(-2px); }
+        
         .logout { background-color: var(--gray-btn); }
         .links-db { background-color: var(--dark-navy); }
         .reports { background-color: var(--purple); }
 
-        /* العنوان والتاريخ */
+        /* قسم العنوان والتاريخ */
         .header-section { text-align: center; margin-bottom: 25px; }
         .main-title { color: #2c3e50; font-size: 40px; margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .date-display { background: #fff; display: inline-block; padding: 10px 30px; border-radius: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); color: var(--blue-admin); font-weight: bold; font-size: 18px; margin-bottom: 20px; }
+        
+        .date-display { 
+            background: #fff; 
+            display: inline-block; 
+            padding: 12px 35px; 
+            border-radius: 50px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            color: var(--blue-admin); 
+            font-weight: bold; 
+            font-size: 20px; 
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
 
-        /* شريط الإعدادات */
+        /* شريط إعدادات الدوام */
         .settings-bar { background: white; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; flex-wrap: wrap; }
         .settings-bar input { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Tajawal'; text-align: center; }
         .btn-save { background-color: var(--blue-admin); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
         /* الجدول */
-        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 1100px; margin: 0 auto; }
+        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 1100px; margin: 0 auto; }
         table { width: 100%; border-collapse: collapse; }
         thead { background-color: var(--dark-navy); color: white; }
-        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
+        th, td { padding: 18px; text-align: center; border-bottom: 1px solid #eee; }
         .delay-val { color: #e74c3c; font-weight: bold; }
         .early-val { color: #f39c12; font-weight: bold; }
+        
+        .status-pill { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .status-out { background: #d4f7d4; color: #27ae60; }
+        .status-in { background: #e1f5fe; color: #0288d1; }
     </style>
 </head>
 <body>
 
     <div class="nav-header">
-        <a href="index.html" class="btn-nav logout"><i class="fas fa-lock"></i> خروج</a>
+        <a href="index.html" class="btn-nav logout"><i class="fas fa-sign-out-alt"></i> خروج</a>
         <a href="links.html" class="btn-nav links-db"><i class="fas fa-paperclip"></i> الروابط</a>
         <a href="reports.html" class="btn-nav reports"><i class="fas fa-chart-bar"></i> التقارير الشهرية</a>
     </div>
@@ -59,9 +76,9 @@
             <i class="fas fa-school" style="color: var(--blue-admin);"></i>
             <h1>ثانوية الصحافة</h1>
         </div>
-        <div class="date-display" id="full-date-info">
-            <i class="far fa-calendar-alt"></i> 
-            <span id="day-name">--</span> : 
+        <div class="date-display">
+            <i class="far fa-calendar-check"></i> 
+            <span id="day-name">--</span> | 
             <span id="current-date">--/--/----</span>
         </div>
     </div>
@@ -87,13 +104,13 @@
                 </tr>
             </thead>
             <tbody id="attendanceTableBody">
-                <tr><td colspan="6">جاري جلب بيانات اليوم...</td></tr>
+                <tr><td colspan="6">جاري جلب البيانات...</td></tr>
             </tbody>
         </table>
     </div>
 
     <script>
-        // إعدادات Firebase الخاصة بك
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
@@ -107,29 +124,31 @@
         const database = firebase.database();
 
         // عرض اليوم والتاريخ الحاليين
-        function updateDateTime() {
+        function displayCurrentDate() {
             const now = new Date();
             const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
             document.getElementById('day-name').innerText = days[now.getDay()];
             document.getElementById('current-date').innerText = now.toLocaleDateString('ar-SA');
         }
 
+        // حفظ ساعات الدوام في Firebase
         function saveWorkHours() {
             const start = document.getElementById('arrivalTime').value;
             const end = document.getElementById('departureTime').value;
             database.ref('settings/workHours').set({ start, end })
-            .then(() => alert("تم حفظ مواعيد الدوام"));
+            .then(() => alert("تم تحديث مواعيد الدوام الرسمي بنجاح"));
         }
 
-        // جلب البيانات بشكل حي
+        // جلب بيانات الحضور لليوم الحالي وعرضها تلقائياً
         const todayKey = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        
         database.ref('attendance/' + todayKey).on('value', (snapshot) => {
             const data = snapshot.val();
             const tableBody = document.getElementById('attendanceTableBody');
             tableBody.innerHTML = "";
 
             if (!data) {
-                tableBody.innerHTML = '<tr><td colspan="6">لا يوجد سجلات حضور لهذا اليوم حتى الآن</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" style="color:#999">لا يوجد سجلات حضور لهذا اليوم</td></tr>';
                 return;
             }
 
@@ -137,20 +156,22 @@
                 const record = data[id];
                 tableBody.innerHTML += `
                     <tr>
-                        <td><strong>${record.name}</strong><br><small>${id}</small></td>
+                        <td><strong>${record.name}</strong><br><small style="color:#7f8c8d">${id}</small></td>
                         <td>${record.checkIn || '--:--'}</td>
                         <td class="delay-val">${record.lateMins || 0}</td>
                         <td>${record.checkOut || '--:--'}</td>
                         <td class="early-val">${record.earlyMins || 0}</td>
                         <td>
-                            ${record.checkOut ? '<span style="color:#27ae60">انصرف <i class="fas fa-check-circle"></i></span>' : '<span style="color:#3498db">موجود حالياً</span>'}
+                            ${record.checkOut 
+                                ? '<span class="status-pill status-out">انصرف <i class="fas fa-check-circle"></i></span>' 
+                                : '<span class="status-pill status-in">حاضر الآن <i class="fas fa-clock"></i></span>'}
                         </td>
                     </tr>
                 `;
             }
         });
 
-        updateDateTime();
+        displayCurrentDate();
     </script>
 </body>
 </html>
