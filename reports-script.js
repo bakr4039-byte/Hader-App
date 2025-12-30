@@ -1,4 +1,11 @@
-const firebaseConfig = { /* الإعدادات نفسها */ };
+const firebaseConfig = {
+    apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
+    authDomain: "hader-system.firebaseapp.com",
+    projectId: "hader-system",
+    storageBucket: "hader-system.firebasestorage.app",
+    messagingSenderId: "1039709774940",
+    appId: "1:1039709774940:web:078351fe5cb90593473299"
+};
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 

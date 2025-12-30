@@ -1,209 +1,103 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة روابط المعلمين - مجمع أبي بن كعب</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+const firebaseConfig = {
+    apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
+    authDomain: "hader-system.firebaseapp.com",
+    projectId: "hader-system",
+    storageBucket: "hader-system.firebasestorage.app",
+    messagingSenderId: "1039709774940",
+    appId: "1:1039709774940:web:078351fe5cb90593473299"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// إحداثيات مجمع أبي بن كعب (حي الياسمين - جامع الضيان)
+const SCHOOL_LOC = { lat: 24.8142, lng: 46.6418 }; 
+
+let WORK_START, WORK_END, map, userMarker, schoolCircle, distanceLine;
+const urlParams = new URLSearchParams(window.location.search);
+const tId = urlParams.get('id');
+const tName = decodeURIComponent(urlParams.get('name') || "");
+
+function init() {
+    if (tName) {
+        document.getElementById('display-name').innerText = "الأستاذ/ " + tName;
+        document.getElementById('display-id').innerText = tId;
+    }
+    map = L.map('map').setView([SCHOOL_LOC.lat, SCHOOL_LOC.lng], 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     
-    <style>
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+    // علامة المدرسة ونطاق الـ 50 متر
+    L.marker([SCHOOL_LOC.lat, SCHOOL_LOC.lng]).addTo(map).bindPopup('مجمع أبي بن كعب');
+    schoolCircle = L.circle([SCHOOL_LOC.lat, SCHOOL_LOC.lng], { color: '#27ae60', radius: 50, fillOpacity: 0.1 }).addTo(map);
+    distanceLine = L.polyline([], {color: '#3498db', dashArray: '5, 10'}).addTo(map);
+    
+    trackUser();
+}
 
-        .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            width: 90%;
-            max-width: 800px;
-            text-align: center;
-        }
-
-        h1 {
-            color: #2c3e50;
-            font-size: 28px;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        input {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            width: 200px;
-            font-family: 'Tajawal', sans-serif;
-            text-align: center;
-        }
-
-        .btn-add {
-            background-color: #34495e;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-
-        .btn-add:hover {
-            background-color: #2c3e50;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th {
-            border-bottom: 2px solid #eee;
-            padding: 15px;
-            color: #7f8c8d;
-            font-weight: bold;
-        }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #f9f9f9;
-        }
-
-        .btn-delete {
-            color: #e74c3c;
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-size: 18px;
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 30px;
-            text-decoration: none;
-            color: #3498db;
-            font-weight: bold;
-        }
-
-        .back-link i {
-            background-color: #34495e;
-            color: white;
-            padding: 5px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h1>
-        إدارة قاعدة بيانات الروابط المعتمدة
-        <i class="fas fa-paperclip"></i>
-    </h1>
-
-    <div class="input-group">
-        <input type="text" id="teacherName" placeholder="اسم المعلم">
-        <input type="text" id="jobID" placeholder="الرقم الوظيفي">
-        <button class="btn-add" onclick="addLink()">إضافة للقاعدة</button>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>المعلم</th>
-                <th>الرقم الوظيفي</th>
-                <th>الإجراءات</th>
-            </tr>
-        </thead>
-        <tbody id="linksTableBody">
-            </tbody>
-    </table>
-
-    <a href="dashboard.html" class="back-link">
-        العودة للوحة الإدارة
-        <i class="fas fa-arrow-left"></i>
-    </a>
-</div>
-
-<script>
-    // تحميل البيانات عند فتح الصفحة
-    document.addEventListener('DOMContentLoaded', displayLinks);
-
-    function addLink() {
-        const name = document.getElementById('teacherName').value;
-        const id = document.getElementById('jobID').value;
-
-        if (name === "" || id === "") {
-            alert("يرجى ملء جميع الحقول");
-            return;
-        }
-
-        const linkData = { name, id };
+function trackUser() {
+    navigator.geolocation.watchPosition(pos => {
+        const uLat = pos.coords.latitude; const uLng = pos.coords.longitude;
+        const dist = calculateDistance(uLat, uLng, SCHOOL_LOC.lat, SCHOOL_LOC.lng);
         
-        // جلب البيانات الحالية من localStorage
-        let links = JSON.parse(localStorage.getItem('approvedLinks')) || [];
-        links.push(linkData);
+        document.getElementById('distance-info').innerText = `المسافة الحالية: ${Math.round(dist)} متر`;
         
-        // حفظ البيانات
-        localStorage.setItem('approvedLinks', JSON.stringify(links));
+        if (userMarker) userMarker.setLatLng([uLat, uLng]);
+        else userMarker = L.circleMarker([uLat, uLng], { radius: 7, color: 'blue' }).addTo(map);
         
-        // مسح الحقول وتحديث الجدول
-        document.getElementById('teacherName').value = "";
-        document.getElementById('jobID').value = "";
-        displayLinks();
+        distanceLine.setLatLngs([[uLat, uLng], [SCHOOL_LOC.lat, SCHOOL_LOC.lng]]);
+        document.getElementById('status-msg').innerText = dist <= 50 ? "✅ أنت داخل النطاق المسموح" : "❌ أنت خارج نطاق المجمع";
+        schoolCircle.setStyle({ color: dist <= 50 ? '#27ae60' : '#e74c3c' });
+    }, null, { enableHighAccuracy: true });
+}
+
+function processAttendance(type) {
+    if(!WORK_START) return alert("بانتظار تحميل إعدادات الدوام...");
+    
+    navigator.geolocation.getCurrentPosition(pos => {
+        const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, SCHOOL_LOC.lat, SCHOOL_LOC.lng);
+        if (dist <= 50) {
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+            const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '-');
+            
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            const startMins = parseTimeToMinutes(WORK_START);
+            const endMins = parseTimeToMinutes(WORK_END);
+
+            let diff = 0; let status = "منضبط";
+            if (type === 'حضور' && currentMins > startMins) { diff = currentMins - startMins; status = "تأخير"; }
+            if (type === 'انصراف' && currentMins < endMins) { diff = endMins - currentMins; status = "خروج مبكر"; }
+
+            database.ref(`attendance/${dateStr}/${tId}`).update({
+                name: tName,
+                [type === 'حضور' ? 'checkIn' : 'checkOut']: timeStr,
+                [type === 'حضور' ? 'lateMins' : 'earlyMins']: diff,
+                [type === 'حضور' ? 'inStatus' : 'outStatus']: status
+            }).then(() => alert(`تم تسجيل ${type} بنجاح عند الساعة ${timeStr}`));
+        } else {
+            alert(`فشل التسجيل! أنت على بُعد ${Math.round(dist)} متر من المجمع.`);
+        }
+    }, null, { enableHighAccuracy: true });
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = (lat2-lat1)*Math.PI/180;
+    const dLon = (lon2-lon1)*Math.PI/180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+function parseTimeToMinutes(t) { 
+    const p = t.split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]); 
+}
+
+database.ref('settings/workHours').on('value', s => {
+    if(s.val()) {
+        WORK_START = s.val().start; WORK_END = s.val().end;
+        document.getElementById('set-start').innerText = WORK_START;
+        document.getElementById('set-end').innerText = WORK_END;
     }
+});
 
-    function displayLinks() {
-        const tableBody = document.getElementById('linksTableBody');
-        tableBody.innerHTML = "";
-        
-        let links = JSON.parse(localStorage.getItem('approvedLinks')) || [];
-
-        links.forEach((link, index) => {
-            const row = `
-                <tr>
-                    <td>${link.name}</td>
-                    <td>${link.id}</td>
-                    <td>
-                        <button class="btn-delete" onclick="deleteLink(${index})">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        });
-    }
-
-    function deleteLink(index) {
-        let links = JSON.parse(localStorage.getItem('approvedLinks'));
-        links.splice(index, 1);
-        localStorage.setItem('approvedLinks', JSON.stringify(links));
-        displayLinks();
-    }
-</script>
-
-</body>
-</html>
+window.onload = init;
+setInterval(() => { document.getElementById('current-time').innerText = new Date().toLocaleTimeString('ar-SA'); }, 1000);

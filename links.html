@@ -29,7 +29,15 @@
         <br><a href="admin.html" style="color:#3498db; font-weight:bold; text-decoration:none;">⬅️ العودة للوحة الإدارة</a>
     </div>
     <script>
-        firebase.initializeApp({ /* نفس FirebaseConfig أعلاه */ });
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
+            authDomain: "hader-system.firebaseapp.com",
+            projectId: "hader-system",
+            storageBucket: "hader-system.firebasestorage.app",
+            messagingSenderId: "1039709774940",
+            appId: "1:1039709774940:web:078351fe5cb90593473299"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         function addNewTeacher() { 
             const n = document.getElementById('teacher-n').value; 
