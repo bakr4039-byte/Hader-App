@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تقارير ثانوية الصحافة - بحث متقدم</title>
+    <title>تقارير المعلمين المنفصلة - ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -13,46 +13,43 @@
         .container { max-width: 1200px; margin: auto; }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
         
-        /* قسم البحث */
+        /* قسم البحث المطور */
         .filter-sec { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .filter-sec div { display: flex; flex-direction: column; gap: 5px; }
-        input[type="date"] { padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Tajawal'; }
+        select, input[type="date"] { padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Tajawal'; min-width: 180px; }
         .btn-search { background: #3498db; color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; align-self: flex-end; }
 
-        /* صناديق الإحصائيات المطورة */
+        /* صناديق الإحصائيات */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-top: 5px solid #3498db; transition: 0.3s; }
-        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-top: 5px solid #3498db; }
         .stat-card h3 { font-size: 13px; color: #7f8c8d; margin: 0; }
         .stat-card p { font-size: 24px; font-weight: bold; margin: 8px 0 0; color: #2c3e50; }
-        .c-absent { border-top-color: #e74c3c; } /* أحمر للغياب */
-        .c-late { border-top-color: #f39c12; }   /* برتقالي للتأخير */
-        .c-early { border-top-color: #9b59b6; }  /* بنفسجي للخروج المبكر */
-        .c-no-out { border-top-color: #34495e; } /* رمادي لعدم الانصراف */
+        .c-absent { border-top-color: #e74c3c; }
+        .c-late { border-top-color: #f39c12; }
+        .c-no-out { border-top-color: #34495e; }
 
         table { width: 100%; background: white; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         th { background: #2c3e50; color: white; padding: 12px; font-size: 13px; }
         td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
-        .row-abs { background: #fff5f5; color: #c0392b; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2><i class="fas fa-search-location"></i> بحث التقارير المتقدم</h2>
+        <h2><i class="fas fa-user-chart"></i> تقرير المعلم المنفصل</h2>
 
         <div class="filter-sec">
+            <div><label>اختر المعلم:</label><select id="teacherSelect"><option value="all">جميع المعلمين</option></select></div>
             <div><label>من تاريخ:</label><input type="date" id="dateFrom"></div>
             <div><label>إلى تاريخ:</label><input type="date" id="dateTo"></div>
             <button class="btn-search" onclick="fetchRangeReport()"><i class="fas fa-filter"></i> عرض التقرير</button>
         </div>
 
-        <div class="stats-grid">
+        <div class="stats-grid" id="statsGrid">
             <div class="stat-card c-absent"><h3>إجمالي الغياب</h3><p id="tAbs">0</p></div>
             <div class="stat-card c-late"><h3>أيام التأخير</h3><p id="tLateDays">0</p></div>
             <div class="stat-card c-late"><h3>دقائق التأخير</h3><p id="tLateMins">0</p></div>
-            <div class="stat-card c-early"><h3>مرات خروج مبكر</h3><p id="tEarlyDays">0</p></div>
-            <div class="stat-card c-early"><h3>دقائق خروج مبكر</h3><p id="tEarlyMins">0</p></div>
+            <div class="stat-card"><h3>دقائق خروج مبكر</h3><p id="tEarlyMins">0</p></div>
             <div class="stat-card c-no-out"><h3>عدم انصراف</h3><p id="tNoOut">0</p></div>
         </div>
 
@@ -65,7 +62,6 @@
                     <th>الانصراف</th>
                     <th>تأخير (د)</th>
                     <th>مبكر (د)</th>
-                    <th>الحالة</th>
                 </tr>
             </thead>
             <tbody id="reportTableBody"></tbody>
