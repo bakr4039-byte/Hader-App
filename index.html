@@ -9,170 +9,108 @@
     <meta name="theme-color" content="#3498db">
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log("نظام التطبيق يعمل بنجاح"))
-                .catch(err => console.log("خطأ في تسجيل التطبيق", err));
+            navigator.serviceWorker.register('sw.js').then(() => console.log("نظام التطبيق جاهز"));
         }
     </script>
+
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; z-index: 100; margin-top: -20px; }
+        .container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; margin-top: -30px; z-index: 100; }
         #map { height: 250px; width: 100%; max-width: 400px; border-radius: 20px; margin-bottom: 10px; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .logo { color: #3498db; font-size: 45px; margin-bottom: 5px; }
-        h2 { color: #2c3e50; margin: 5px 0; font-size: 22px; }
-        #statusMsg { color: #7f8c8d; font-size: 13px; margin-bottom: 15px; display: block; }
         .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; transition: 0.3s; }
         .btn-in { background: #27ae60; }
         .btn-out { background: #e74c3c; }
         .btn-perm { background: #3498db; }
         .btn-perm.active { background: #e67e22; }
-        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; }
+        .loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; }
     </style>
 </head>
 <body>
-
-    <div id="loader" class="loading-overlay">
-        <i class="fas fa-spinner fa-spin fa-3x" style="color:#3498db"></i>
-        <p style="margin-top:15px; font-weight:bold;">جاري تحديد موقعك الجغرافي...</p>
-    </div>
-
+    <div id="loading" class="loader"><i class="fas fa-spinner fa-spin fa-3x" style="color:#3498db"></i><p>جاري التحقق من الموقع...</p></div>
     <div id="map"></div>
-
     <div class="container">
-        <div class="logo"><i class="fas fa-school"></i></div>
         <h2 id="teacherName">ثانوية الصحافة</h2>
-        <span id="statusMsg">النطاق المسموح: 150 متر حول المدرسة</span>
-        
-        <button class="btn btn-in" onclick="checkLocationAndProcess('حضور')">
-            <i class="fas fa-sign-in-alt"></i> تسجيل حضور
-        </button>
-        
-        <div id="permissionSection" style="display:none;">
-            <button id="btnPermission" class="btn btn-perm" onclick="togglePermission()">
-                <i class="fas fa-walking"></i> خروج مؤقت / استئذان
-            </button>
-        </div>
-
-        <button class="btn btn-out" onclick="checkLocationAndProcess('انصراف')">
-            <i class="fas fa-sign-out-alt"></i> تسجيل انصراف
-        </button>
+        <button class="btn btn-in" onclick="checkLoc('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
+        <div id="permSec" style="display:none;"><button id="btnP" class="btn btn-perm" onclick="toggleP()"><i class="fas fa-walking"></i> استئذان / خروج مؤقت</button></div>
+        <button class="btn btn-out" onclick="checkLoc('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
     </div>
 
     <script>
-        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
             databaseURL: "https://hader-system-default-rtdb.firebaseio.com/", 
             projectId: "hader-system",
-            storageBucket: "hader-system.firebasestorage.app",
-            messagingSenderId: "1039709774940",
             appId: "1:1039709774940:web:078351fe5cb90593473299"
         };
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const db = firebase.database();
 
-        // إحداثيات المدرسة المعتمدة (ثانوية الصحافة)
-        const SCHOOL_LAT = 24.8001897; 
-        const SCHOOL_LNG = 46.6449937;
-
-        // جلب بيانات المعلم من الرابط
-        const urlParams = new URLSearchParams(window.location.search);
-        const tId = urlParams.get('id');
-        const tName = urlParams.get('name');
+        // إحداثيات ثانوية الصحافة الصحيحة
+        const SLAT = 24.8001897, SLNG = 46.6449937;
+        const params = new URLSearchParams(window.location.search);
+        const tId = params.get('id'), tName = params.get('name');
         if (tName) document.getElementById('teacherName').innerText = "مرحباً: " + tName;
 
-        const todayKey = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-        let outStartTime = null;
+        const day = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        let outT = null;
 
-        // تهيئة الخريطة
-        let map = L.map('map').setView([SCHOOL_LAT, SCHOOL_LNG], 17);
+        let map = L.map('map').setView([SLAT, SLNG], 17);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker([SCHOOL_LAT, SCHOOL_LNG]).addTo(map).bindPopup('موقع المدرسة المعتمد').openPopup();
-        L.circle([SCHOOL_LAT, SCHOOL_LNG], { radius: 150, color: '#3498db', fillOpacity: 0.1 }).addTo(map);
+        L.marker([SLAT, SLNG]).addTo(map).bindPopup('مجمع ثانوية الصحافة').openPopup();
+        L.circle([SLAT, SLNG], { radius: 150, color: '#3498db', fillOpacity: 0.1 }).addTo(map);
+        let uM;
 
-        let userMarker;
+        function checkLoc(type) {
+            document.getElementById('loading').style.display = 'flex';
+            navigator.geolocation.getCurrentPosition(pos => {
+                const dist = calcDist(pos.coords.latitude, pos.coords.longitude, SLAT, SLNG);
+                if (uM) map.removeLayer(uM);
+                uM = L.circleMarker([pos.coords.latitude, pos.coords.longitude], {color:'red', radius:8}).addTo(map);
+                map.setView([pos.coords.latitude, pos.coords.longitude], 17);
 
-        // وظيفة فحص الموقع والتسجيل
-        function checkLocationAndProcess(type) {
-            document.getElementById('loader').style.display = 'flex';
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    const dist = calculateDistance(userLat, userLng, SCHOOL_LAT, SCHOOL_LNG);
-
-                    // تحديث الموقع على الخريطة
-                    if (userMarker) map.removeLayer(userMarker);
-                    userMarker = L.circleMarker([userLat, userLng], { color: 'red', radius: 8 }).addTo(map).bindPopup('موقعك الحالي').openPopup();
-                    map.setView([userLat, userLng], 17);
-
-                    if (dist <= 150) {
-                        executeAttendance(type);
-                    } else {
-                        document.getElementById('loader').style.display = 'none';
-                        alert(`أنت خارج النطاق بمسافة ${Math.round(dist)} متر. يجب أن تكون أقرب للمدرسة.`);
-                    }
-                }, (error) => {
-                    document.getElementById('loader').style.display = 'none';
-                    alert("يرجى تفعيل خدمة الموقع (GPS) وتجديد الصفحة.");
-                });
-            }
+                if (dist <= 150) {
+                    const time = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+                    db.ref(`attendance/${day}/${tId}`).update({
+                        name: tName, [type === 'حضور' ? 'checkIn' : 'checkOut']: time, inStatus: "حاضر"
+                    }).then(() => {
+                        document.getElementById('loading').style.display = 'none';
+                        alert(`تم تسجيل ${type} بنجاح`);
+                        if(type === 'حضور') document.getElementById('permSec').style.display = 'block';
+                    });
+                } else {
+                    document.getElementById('loading').style.display = 'none';
+                    alert(`أنت خارج النطاق بمسافة ${Math.round(dist)} متر`);
+                }
+            }, () => { alert("يرجى تفعيل GPS"); document.getElementById('loading').style.display = 'none'; });
         }
 
-        // تسجيل البيانات في Firebase
-        function executeAttendance(type) {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            
-            database.ref(`attendance/${todayKey}/${tId}`).update({
-                name: tName,
-                [type === 'حضور' ? 'checkIn' : 'checkOut']: timeStr,
-                inStatus: "حاضر"
-            }).then(() => {
-                document.getElementById('loader').style.display = 'none';
-                alert(`✅ تم تسجيل ${type} بنجاح عند الساعة ${timeStr}`);
-                if(type === 'حضور') document.getElementById('permissionSection').style.display = 'block';
-            });
-        }
-
-        // دالة حساب المسافة
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        function calcDist(la1, lo1, la2, lo2) {
+            const R = 6371e3, dLa = (la2-la1)*Math.PI/180, dLo = (lo2-lo1)*Math.PI/180;
+            const a = Math.sin(dLa/2)**2 + Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // وظيفة الاستئذان
-        function togglePermission() {
-            const btn = document.getElementById('btnPermission');
-            const now = new Date();
-            if (!outStartTime) {
-                if(!confirm("بدء تسجيل خروج مؤقت؟")) return;
-                outStartTime = now;
-                btn.classList.add('active');
-                btn.innerHTML = '<i class="fas fa-undo"></i> إنهاء الاستئذان (عودة)';
+        function toggleP() {
+            const btn = document.getElementById('btnP');
+            if (!outT) {
+                if(!confirm("بدء خروج مؤقت؟")) return;
+                outT = new Date();
+                btn.classList.add('active'); btn.innerHTML = 'إنهاء الاستئذان (عودة)';
             } else {
-                const diffMins = Math.round((now - outStartTime) / 60000);
-                database.ref(`attendance/${todayKey}/${tId}`).once('value').then(snap => {
-                    const currentOut = snap.val().outDuringDay || 0;
-                    database.ref(`attendance/${todayKey}/${tId}`).update({
-                        outDuringDay: currentOut + diffMins
-                    }).then(() => {
-                        alert(`تمت العودة للعمل. مدة الخروج: ${diffMins} دقيقة`);
-                        outStartTime = null;
-                        btn.classList.remove('active');
-                        btn.innerHTML = '<i class="fas fa-walking"></i> خروج مؤقت / استئذان';
+                const diff = Math.round((new Date() - outT) / 60000);
+                db.ref(`attendance/${day}/${tId}`).once('value').then(s => {
+                    const cur = s.val().outDuringDay || 0;
+                    db.ref(`attendance/${day}/${tId}`).update({ outDuringDay: cur + diff }).then(() => {
+                        alert(`تمت العودة. المدة: ${diff} دقيقة`);
+                        outT = null; btn.classList.remove('active'); btn.innerHTML = 'استئذان / خروج مؤقت';
                     });
                 });
             }
