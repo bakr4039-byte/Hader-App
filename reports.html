@@ -2,94 +2,43 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تقارير الأداء التفصيلية - ثانوية الصحافة</title>
+    <title>تقارير ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
-        :root {
-            --dark-navy: #34495e; --purple: #8e44ad; --blue: #3498db;
-            --danger: #e74c3c; --warning: #f39c12; --success: #27ae60;
-        }
-        body { font-family: 'Tajawal', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .report-card { background: white; max-width: 1300px; margin: 0 auto; padding: 25px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
-        
-        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
-        .header h1 { color: var(--purple); font-size: 28px; }
-
-        .date-range-picker { display: flex; justify-content: center; gap: 15px; align-items: center; background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #eee; flex-wrap: wrap; }
-        input[type="date"] { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Tajawal'; }
-
-        .btn-analyze { background-color: var(--purple); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
-        .btn-analyze:hover { background-color: #732d91; transform: scale(1.02); }
-
-        .table-container { overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; background: white; min-width: 1000px; }
-        th { background-color: var(--dark-navy); color: white; padding: 15px 10px; border: 1px solid #2c3e50; font-size: 13px; }
-        td { padding: 12px 8px; border: 1px solid #eee; text-align: center; font-size: 14px; }
-        
-        /* تلوين الأعمدة */
-        .col-late { background-color: #fff9f0; } /* خلفية خفيفة للتأخير */
-        .col-early { background-color: #f0f7ff; } /* خلفية خفيفة للخروج المبكر */
-        
-        .badge { padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; display: inline-block; }
-        .count-badge { background: #e0e0e0; color: #333; }
-        .time-badge { background: #fee2e2; color: #b91c1c; }
-        .early-badge { background: #e1f5fe; color: #0277bd; }
-
-        .print-btn { margin-top: 30px; background-color: var(--success); color: white; border: none; padding: 12px 40px; border-radius: 8px; cursor: pointer; font-weight: bold; display: block; margin-left: auto; margin-right: auto; }
-
-        @media print { .nav-header, .date-range-picker, .print-btn { display: none; } }
+        body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 1200px; margin: auto; }
+        .controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; background: #f9f9f9; padding: 20px; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #34495e; color: white; padding: 10px; font-size: 12px; }
+        td { padding: 10px; border: 1px solid #eee; text-align: center; }
+        .btn-print { background: #27ae60; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; display: block; margin: 20px auto; }
     </style>
 </head>
 <body>
-
-    <div class="report-card">
-        <div class="header">
-            <h1><i class="fas fa-chart-line"></i> سجل الإحصائيات الزمنية والرقمية</h1>
-            <p>ثانوية الصحافة الأهلية - نظام حاضر</p>
+    <div class="card">
+        <h1 style="text-align:center; color:#8e44ad;"><i class="fas fa-chart-pie"></i> التقرير الإحصائي العام</h1>
+        <div class="controls">
+            من: <input type="date" id="s"> إلى: <input type="date" id="e">
+            <button onclick="calc()" style="background:#8e44ad; color:white; border:none; padding:8px 20px; border-radius:5px; cursor:pointer;">تحليل</button>
         </div>
-
-        <div class="date-range-picker">
-            <label>الفترة من:</label>
-            <input type="date" id="start">
-            <label>إلى:</label>
-            <input type="date" id="end">
-            <button class="btn-analyze" onclick="startAnalysis()">
-                <i class="fas fa-sync-alt"></i> تحليل البيانات وتوليد التقرير
-            </button>
-        </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th rowspan="2" style="width: 150px;">المعلم</th>
-                        <th colspan="2">الأيام العامة</th>
-                        <th colspan="2" class="col-late">التأخر عن الحضور</th>
-                        <th colspan="2" class="col-early">الخروج المبكر</th>
-                        <th rowspan="2">لم ينصرف (يوم)</th>
-                    </tr>
-                    <tr>
-                        <th>حضور</th>
-                        <th>غياب</th>
-                        <th class="col-late">عدد المرات</th>
-                        <th class="col-late">إجمالي الدقائق</th>
-                        <th class="col-early">عدد المرات</th>
-                        <th class="col-early">إجمالي الدقائق</th>
-                    </tr>
-                </thead>
-                <tbody id="resBody">
-                    <tr><td colspan="8" style="padding:40px; color:#999;">الرجاء تحديد الفترة والضغط على زر التحليل</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <button class="print-btn" onclick="window.print()"><i class="fas fa-print"></i> طباعة كـ PDF</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>المعلم</th>
+                    <th>حضور</th>
+                    <th>غياب</th>
+                    <th>مرات التأخر</th>
+                    <th>دقائق التأخر</th>
+                    <th>مرات الخروج</th>
+                    <th>دقائق الخروج</th>
+                </tr>
+            </thead>
+            <tbody id="res"></tbody>
+        </table>
+        <button class="btn-print" onclick="window.print()">طباعة</button>
     </div>
 
     <script>
@@ -105,77 +54,38 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        async function startAnalysis() {
-            const sIn = document.getElementById('start').value;
-            const eIn = document.getElementById('end').value;
-            if(!sIn || !eIn) return alert("حدد التاريخ أولاً");
-
-            const startDate = new Date(sIn);
-            const endDate = new Date(eIn);
-            const resBody = document.getElementById('resBody');
-            resBody.innerHTML = '<tr><td colspan="8">جاري الحساب...</td></tr>';
-
-            const snapshot = await database.ref('attendance').once('value');
-            const dbData = snapshot.val();
-            if(!dbData) { resBody.innerHTML = '<tr><td colspan="8">لا توجد بيانات</td></tr>'; return; }
-
-            let stats = {};
-
-            Object.keys(dbData).forEach(dateStr => {
-                const p = dateStr.split('-');
-                const current = new Date(p[2], p[1]-1, p[0]);
-
-                if(current >= startDate && current <= endDate) {
-                    const dayLogs = dbData[dateStr];
-                    Object.keys(dayLogs).forEach(tId => {
-                        const log = dayLogs[tId];
-                        if(!stats[tId]) stats[tId] = { name: log.name, present:0, absent:0, lateTimes:0, lateMins:0, earlyTimes:0, earlyMins:0, noOut:0 };
-
-                        if(log.inStatus === "غائب") {
-                            stats[tId].absent++;
-                        } else {
-                            stats[tId].present++;
-                            // حساب التأخر
-                            if(Number(log.lateMins) > 0) {
-                                stats[tId].lateTimes++;
-                                stats[tId].lateMins += Number(log.lateMins);
-                            }
-                            // حساب الخروج المبكر
-                            if(Number(log.earlyMins) > 0) {
-                                stats[tId].earlyTimes++;
-                                stats[tId].earlyMins += Number(log.earlyMins);
-                            }
-                            // حساب لم ينصرف
-                            if(!log.checkOut || log.checkOut === "") {
-                                stats[tId].noOut++;
+        function calc() {
+            const start = new Date(document.getElementById('s').value);
+            const end = new Date(document.getElementById('e').value);
+            database.ref('attendance').once('value', s => {
+                const all = s.val();
+                let stats = {};
+                for(let date in all) {
+                    const p = date.split('-');
+                    const d = new Date(p[2], p[1]-1, p[0]);
+                    if(d >= start && d <= end) {
+                        for(let id in all[date]) {
+                            const r = all[date][id];
+                            if(!stats[id]) stats[id] = { name: r.name, p:0, a:0, lt:0, lm:0, ot:0, om:0 };
+                            if(r.inStatus === "غائب") stats[id].a++;
+                            else {
+                                stats[id].p++;
+                                if(r.lateMins > 0) { stats[id].lt++; stats[id].lm += Number(r.lateMins); }
+                                if(r.outDuringDay > 0) { stats[id].ot++; stats[id].om += Number(r.outDuringDay); }
                             }
                         }
-                    });
+                    }
                 }
-            });
-
-            renderTable(stats);
-        }
-
-        function renderTable(stats) {
-            const body = document.getElementById('resBody');
-            body.innerHTML = "";
-            const ids = Object.keys(stats);
-            if(ids.length === 0) { body.innerHTML = '<tr><td colspan="8">لا نتائج للفترة المختارة</td></tr>'; return; }
-
-            ids.forEach(id => {
-                const s = stats[id];
-                body.innerHTML += `
-                    <tr>
-                        <td><strong>${s.name}</strong><br><small>${id}</small></td>
-                        <td><span class="badge" style="background:#e8f5e9; color:#2e7d32">${s.present}</span></td>
-                        <td><span class="badge" style="background:#ffebee; color:#c62828">${s.absent}</span></td>
-                        <td class="col-late"><span class="badge count-badge">${s.lateTimes}</span></td>
-                        <td class="col-late"><span class="badge time-badge">${s.lateMins}</span></td>
-                        <td class="col-early"><span class="badge count-badge">${s.earlyTimes}</span></td>
-                        <td class="col-early"><span class="badge early-badge">${s.earlyMins}</span></td>
-                        <td><span class="badge" style="background:#eee;">${s.noOut}</span></td>
-                    </tr>`;
+                const res = document.getElementById('res');
+                res.innerHTML = Object.keys(stats).map(id => `<tr>
+                    <td>${stats[id].name}</td>
+                    <td>${stats[id].p}</td>
+                    <td>${stats[id].a}</td>
+                    <td>${stats[id].lt}</td>
+                    <td style="color:red">${stats[id].lm}</td>
+                    <td>${stats[id].ot}</td>
+                    <td style="color:#e67e22">${stats[id].om}</td>
+                </tr>`).join('');
             });
         }
     </script>

@@ -2,79 +2,49 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - ثانوية الصحافة</title>
+    <title>إدارة ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
-        :root { --dark-navy: #34495e; --purple: #8e44ad; --blue-admin: #3498db; --danger: #e74c3c; }
-        body { font-family: 'Tajawal', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
-        .nav-header { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
-        .btn-nav { padding: 10px 25px; border-radius: 8px; border: none; color: white; cursor: pointer; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 16px; }
-        .logout { background-color: #95a5a6; }
-        .links-db { background-color: var(--dark-navy); }
-        .reports { background-color: var(--purple); }
-        .main-title { text-align: center; color: #2c3e50; font-size: 40px; margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 15px; }
-        .date-display { background: #fff; display: block; width: fit-content; margin: 0 auto 20px; padding: 10px 30px; border-radius: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); color: var(--blue-admin); font-weight: bold; font-size: 18px; border: 1px solid #eee; }
-        .settings-bar { background: white; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; flex-wrap: wrap; }
-        .settings-bar input { padding: 8px; border: 1px solid #ddd; border-radius: 6px; text-align: center; }
-        .btn-save { background-color: var(--blue-admin); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-absence { background-color: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .table-container { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 1100px; margin: 0 auto; }
-        table { width: 100%; border-collapse: collapse; }
-        thead { background-color: var(--dark-navy); color: white; }
-        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
-        .status-absent { color: var(--danger); font-weight: bold; background: #ffeaea; padding: 5px 10px; border-radius: 5px; }
-        .status-present { color: #27ae60; font-weight: bold; }
+        body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; padding: 20px; }
+        .nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
+        .nav a, .btn-abs { padding: 10px 25px; border-radius: 8px; color: white; text-decoration: none; font-weight: bold; border: none; cursor: pointer; }
+        .title-sec { text-align: center; margin-bottom: 25px; }
+        .date-box { background: white; padding: 10px 30px; border-radius: 30px; display: inline-block; box-shadow: 0 2px 10px rgba(0,0,0,0.05); color: #3498db; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+        th { background: #34495e; color: white; padding: 15px; }
+        td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; }
     </style>
 </head>
 <body>
-
-    <div class="nav-header">
-        <a href="index.html" class="btn-nav logout"><i class="fas fa-lock"></i> خروج</a>
-        <a href="links.html" class="btn-nav links-db"><i class="fas fa-paperclip"></i> الروابط</a>
-        <a href="reports.html" class="btn-nav reports"><i class="fas fa-chart-bar"></i> التقارير الشهرية</a>
+    <div class="nav">
+        <a href="links.html" style="background:#34495e;">الروابط</a>
+        <a href="reports.html" style="background:#8e44ad;">التقارير</a>
+        <button class="btn-abs" style="background:#e74c3c;" onclick="recordAbsenceAll()">تسجيل غياب المتأخرين</button>
     </div>
 
-    <div class="main-title">
-        <i class="fas fa-school" style="color: var(--blue-admin);"></i>
-        <h1>ثانوية الصحافة</h1>
+    <div class="title-sec">
+        <h1><i class="fas fa-school"></i> ثانوية الصحافة</h1>
+        <div class="date-box" id="fullDate"></div>
     </div>
 
-    <div class="date-display">
-        <i class="far fa-calendar-alt"></i> <span id="day-name">--</span> : <span id="current-date">--/--/----</span>
-    </div>
-
-    <div class="settings-bar">
-        <strong>ضبط الدوام:</strong>
-        حضور: <input type="time" id="arrivalTime" value="06:45">
-        انصراف: <input type="time" id="departureTime" value="12:30">
-        <button class="btn-save" onclick="saveSettings()">حفظ الأوقات</button>
-        <button class="btn-absence" onclick="recordAbsenceAll()"><i class="fas fa-user-times"></i> تسجيل غياب المتأخرين</button>
-    </div>
-
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>المعلم</th>
-                    <th>وقت الحضور</th>
-                    <th>التأخير (د)</th>
-                    <th>وقت الانصراف</th>
-                    <th>مبكر (د)</th>
-                    <th>الحالة</th>
-                </tr>
-            </thead>
-            <tbody id="attendanceTableBody"></tbody>
-        </table>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>المعلم</th>
+                <th>حضور</th>
+                <th>تأخير (د)</th>
+                <th>انصراف</th>
+                <th>خروج مؤقت (د)</th>
+                <th>الحالة</th>
+            </tr>
+        </thead>
+        <tbody id="adminTable"></tbody>
+    </table>
 
     <script>
-        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
@@ -88,81 +58,38 @@
         const database = firebase.database();
         const todayKey = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
 
-        // جلب البيانات ومقارنة الحضور بالغياب
-        function loadFullStatus() {
-            database.ref('teachers').on('value', (tSnap) => {
-                const teachers = tSnap.val();
-                database.ref('attendance/' + todayKey).on('value', (aSnap) => {
-                    const attendance = aSnap.val() || {};
-                    const tableBody = document.getElementById('attendanceTableBody');
-                    tableBody.innerHTML = "";
+        document.getElementById('fullDate').innerText = new Date().toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-                    if (!teachers) {
-                        tableBody.innerHTML = '<tr><td colspan="6">لا يوجد معلمين في قاعدة البيانات. أضفهم من صفحة الروابط.</td></tr>';
-                        return;
-                    }
-
-                    for (let id in teachers) {
-                        const t = teachers[id];
-                        const a = attendance[id];
-                        
-                        // تحديد الحالة: إذا كان غائباً مسجلاً، أو لم يحضر بعد، أو حاضر
-                        let statusHTML = "";
-                        if (a) {
-                            statusHTML = `<span class="status-present">${a.inStatus || 'حاضر'}</span>`;
-                        } else {
-                            statusHTML = `<span class="status-absent">غائب / لم يحضر</span>`;
-                        }
-
-                        tableBody.innerHTML += `
-                            <tr>
-                                <td><strong>${t.name}</strong><br><small>${id}</small></td>
-                                <td>${a?.checkIn || '--:--'}</td>
-                                <td style="color:red">${a?.lateMins || 0}</td>
-                                <td>${a?.checkOut || '--:--'}</td>
-                                <td>${a?.earlyMins || 0}</td>
-                                <td>${statusHTML}</td>
-                            </tr>`;
-                    }
-                });
+        database.ref('teachers').on('value', tSnap => {
+            const teachers = tSnap.val();
+            database.ref('attendance/' + todayKey).on('value', aSnap => {
+                const att = aSnap.val() || {};
+                const body = document.getElementById('adminTable');
+                body.innerHTML = "";
+                for(let id in teachers) {
+                    const a = att[id];
+                    body.innerHTML += `<tr>
+                        <td>${teachers[id].name}</td>
+                        <td>${a?.checkIn || '--:--'}</td>
+                        <td style="color:red">${a?.lateMins || 0}</td>
+                        <td>${a?.checkOut || '--:--'}</td>
+                        <td style="color:#e67e22; font-weight:bold;">${a?.outDuringDay || 0}</td>
+                        <td style="color:${a ? '#27ae60' : '#e74c3c'}">${a ? (a.inStatus || 'حاضر') : 'غائب'}</td>
+                    </tr>`;
+                }
             });
-        }
+        });
 
-        // تسجيل غياب جماعي لمن لم يحضر
         function recordAbsenceAll() {
-            if(!confirm("هل تريد اعتماد غياب لجميع المعلمين الذين لم يبصموا اليوم؟")) return;
+            if(!confirm("اعتماد غياب الجميع؟")) return;
             database.ref('teachers').once('value', s => {
-                const teachers = s.val();
-                database.ref('attendance/' + todayKey).once('value', aSnap => {
-                    const att = aSnap.val() || {};
-                    for (let id in teachers) {
-                        if (!att[id]) {
-                            database.ref(`attendance/${todayKey}/${id}`).set({
-                                name: teachers[id].name,
-                                inStatus: "غائب",
-                                checkIn: "غائب",
-                                lateMins: 0
-                            });
-                        }
-                    }
-                    alert("تم اعتماد سجل الغياب لليوم");
+                const ts = s.val();
+                database.ref('attendance/' + todayKey).once('value', as => {
+                    const att = as.val() || {};
+                    for(let id in ts) if(!att[id]) database.ref(`attendance/${todayKey}/${id}`).set({ name: ts[id].name, inStatus: "غائب", checkIn: "غائب" });
                 });
             });
         }
-
-        function saveSettings() {
-            const start = document.getElementById('arrivalTime').value;
-            const end = document.getElementById('departureTime').value;
-            database.ref('settings/workHours').set({ start, end }).then(() => alert("تم حفظ الإعدادات"));
-        }
-
-        window.onload = () => {
-            const now = new Date();
-            const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-            document.getElementById('day-name').innerText = days[now.getDay()];
-            document.getElementById('current-date').innerText = now.toLocaleDateString('ar-SA');
-            loadFullStatus();
-        };
     </script>
 </body>
 </html>
