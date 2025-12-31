@@ -3,143 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تقارير الأداء التفصيلية - ثانوية الصحافة</title>
+    <title>التقارير التفصيلية - ثانوية الصحافة</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3f51b5">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        :root { --primary: #3f51b5; --bg: #f8fafc; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        .filter-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; text-align: center; }
-        .input-group { display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 15px; }
-        input[type="date"] { padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-family: 'Tajawal'; }
-        .btn-search { background: var(--primary); color: white; border: none; padding: 10px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        :root { --primary: #3f51b5; --accent: #1a237e; --bg: #f8fafc; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 1200px; margin: auto; }
         
-        .table-container { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #1e293b; color: white; padding: 15px; font-size: 13px; }
+        /* قسم الفلترة والبحث */
+        .filter-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; }
+        .filter-grid { display: flex; gap: 15px; justify-content: center; align-items: flex-end; flex-wrap: wrap; margin-top: 15px; }
+        .input-box { display: flex; flex-direction: column; text-align: right; gap: 5px; }
+        input, select { padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-family: 'Tajawal'; min-width: 160px; }
+        .btn-search { background: var(--primary); color: white; border: none; padding: 11px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-search:hover { background: var(--accent); }
+
+        /* جدول البيانات المطور */
+        .table-wrapper { background: white; border-radius: 20px; overflow-x: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: #1e293b; color: white; padding: 15px; font-size: 13px; white-space: nowrap; }
         td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 500; }
-        tr:hover { background-color: #f1f5f9; }
-        
-        /* ألوان الأعمدة الإحصائية */
-        .col-abs { color: #e11d48; font-weight: bold; } /* غياب */
-        .col-late { color: #d97706; } /* تأخير */
-        .col-early { color: #7c3aed; } /* خروج مبكر */
+        tr:hover { background-color: #f9fbff; }
+
+        /* ألوان التنبيه */
+        .txt-danger { color: #e11d48; font-weight: bold; }
+        .txt-warn { color: #d97706; }
+        .txt-purple { color: #7c3aed; }
+        .bg-light { background: #f8fafc; }
     </style>
 </head>
 <body>
 
-    <div class="filter-card">
-        <h2><i class="fas fa-chart-line"></i> تقرير إحصائيات المعلمين (تجميعي)</h2>
-        <div class="input-group">
-            من: <input type="date" id="dateF">
-            إلى: <input type="date" id="dateT">
-            <button class="btn-search" onclick="generateSummaryReport()">عرض وتحليل البيانات</button>
+    <div class="container">
+        <div class="filter-card">
+            <h2 style="margin:0; color:var(--accent);"><i class="fas fa-file-signature"></i> سجل الأداء التجميعي للمعلمين</h2>
+            <div class="filter-grid">
+                <div class="input-box">
+                    <label>المعلم:</label>
+                    <select id="teacherSelect"><option value="all">جميع المعلمين</option></select>
+                </div>
+                <div class="input-box">
+                    <label>من تاريخ:</label>
+                    <input type="date" id="dateFrom">
+                </div>
+                <div class="input-box">
+                    <label>إلى تاريخ:</label>
+                    <input type="date" id="dateTo">
+                </div>
+                <button class="btn-search" onclick="processReport()"><i class="fas fa-sync-alt"></i> تحليل البيانات</button>
+            </div>
         </div>
-    </div>
 
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>اسم المعلم</th>
-                    <th style="background:#fff1f2; color:#be123c;">إجمالي الغياب</th>
-                    <th style="background:#fffbeb; color:#b45309;">أيام التأخير</th>
-                    <th style="background:#fffbeb; color:#b45309;">دقائق التأخير</th>
-                    <th style="background:#f5f3ff; color:#6d28d9;">دقائق الخروج المبكر</th>
-                    <th style="background:#f8fafc; color:#334155;">عدم انصراف</th>
-                </tr>
-            </thead>
-            <tbody id="summaryBody">
-                <tr><td colspan="6">الرجاء اختيار النطاق الزمني للبحث</td></tr>
-            </tbody>
-        </table>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>اسم المعلم</th>
+                        <th style="background:#fff1f2; color:#be123c;">إجمالي الغياب</th>
+                        <th style="background:#fffbeb; color:#b45309;">أيام التأخير</th>
+                        <th style="background:#fffbeb; color:#b45309;">دقائق التأخير</th>
+                        <th style="background:#f5f3ff; color:#6d28d9;">دقائق الخروج المبكر</th>
+                        <th style="background:#f8fafc; color:#334155;">عدم انصراف</th>
+                    </tr>
+                </thead>
+                <tbody id="reportContent">
+                    <tr><td colspan="6">الرجاء تحديد النطاق الزمني والضغط على تحليل البيانات</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
         // إعدادات Firebase
-        const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(config); const db = firebase.database();
+        const firebaseConfig = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        // --- إعدادات المواعيد الرسمية ---
-        // يمكنك تغيير هذه المواعيد حسب رغبتك
-        const OFFICIAL_START = "07:00"; // موعد الحضور الرسمي
-        const OFFICIAL_END = "13:00";   // موعد الانصراف الرسمي
+        // مواعيد العمل (سيتم تحديثها من الإعدادات)
+        let START_TIME = "07:00"; 
+        let END_TIME = "13:00";
 
-        async function generateSummaryReport() {
-            const startStr = document.getElementById('dateF').value;
-            const endStr = document.getElementById('dateT').value;
-            if(!startStr || !endStr) return alert("يرجى اختيار تاريخ البداية والنهاية");
-
-            const start = new Date(startStr);
-            const end = new Date(endStr);
-            const body = document.getElementById('summaryBody');
-            body.innerHTML = "<tr><td colspan='6'><i class='fas fa-spinner fa-spin'></i> جاري تحليل البيانات ومقارنة المواعيد...</td></tr>";
-
-            const tsSnap = await db.ref('teachers').once('value');
-            const teachers = tsSnap.val() || {};
-            let teachersStats = {};
-
-            Object.keys(teachers).forEach(id => {
-                teachersStats[id] = { name: teachers[id].name, abs: 0, latD: 0, latM: 0, earM: 0, noO: 0 };
-            });
-
-            // مسح الأيام في النطاق المختار
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                const dateS = d.toLocaleDateString('en-GB').replace(/\//g, '-');
-                const attS = await db.ref('attendance/' + dateS).once('value');
-                const dayAtt = attS.val() || {};
-
-                Object.keys(teachers).forEach(id => {
-                    const r = dayAtt[id];
-                    if (!r) {
-                        teachersStats[id].abs++; // غياب كامل
-                    } else {
-                        // 1. حساب دقائق التأخير (إذا كان الحضور بعد الموعد الرسمي)
-                        if (r.checkIn) {
-                            const latM = calculateTimeDifference(OFFICIAL_START, r.checkIn);
-                            if (latM > 0) {
-                                teachersStats[id].latD++; // زيادة عدد أيام التأخير
-                                teachersStats[id].latM += latM; // إضافة الدقائق
-                            }
-                        }
-
-                        // 2. حساب دقائق الخروج المبكر (إذا كان الانصراف قبل الموعد الرسمي)
-                        if (r.checkOut) {
-                            const earM = calculateTimeDifference(r.checkOut, OFFICIAL_END);
-                            if (earM > 0) {
-                                teachersStats[id].earM += earM;
-                            }
-                        } else if (r.checkIn) {
-                            teachersStats[id].noO++; // لم يسجل انصراف
-                        }
-                    }
-                });
+        // 1. جلب المواعيد الرسمية من Firebase
+        db.ref('settings/official_times').on('value', snap => {
+            if(snap.exists()){
+                START_TIME = snap.val().start;
+                END_TIME = snap.val().end;
             }
+        });
 
-            body.innerHTML = "";
-            Object.values(teachersStats).forEach(s => {
-                body.innerHTML += `
-                    <tr>
-                        <td><strong>${s.name}</strong></td>
-                        <td class="col-abs">${s.abs} يوم</td>
-                        <td class="col-late">${s.latD} يوم</td>
-                        <td class="col-late">${s.latM} دقيقة</td>
-                        <td class="col-early">${s.earM} دقيقة</td>
-                        <td style="color:#475569">${s.noO} مرة</td>
-                    </tr>`;
-            });
-        }
-
-        // دالة حساب الفرق بين وقتين بالدقائق
-        function calculateTimeDifference(startTime, endTime) {
-            if (!startTime || !endTime || endTime === '--') return 0;
-            const [h1, m1] = startTime.split(':').map(Number);
-            const [h2, m2] = endTime.split(':').map(Number);
-            const diffInMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
-            return diffInMinutes > 0 ? diffInMinutes : 0;
-        }
-    </script>
-</body>
-</html>
+        // 2. تعبئة قائمة المعلمين تلقائياً
+        db.ref('teachers').once('value', snap => {
+            const list = snap.val() || {};
+            const select = document.getElementById('teacherSelect');
+            Object.keys(list).forEach(id => {
+                let opt = document.createElement('option');
+                opt.value = id
