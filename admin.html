@@ -2,41 +2,72 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة ثانوية الصحافة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - ثانوية الصحافة</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; padding: 20px; }
-        .nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
-        .btn-nav { padding: 10px 25px; border-radius: 8px; color: white; text-decoration: none; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; }
-        h1 { text-align: center; color: #2c3e50; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        th { background: #34495e; color: white; padding: 15px; }
-        td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; }
-        .out-badge { color: #e67e22; font-weight: bold; }
+        :root { --primary: #3498db; --danger: #e74c3c; --success: #27ae60; --dark: #2c3e50; }
+        body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+        .admin-card { background: white; max-width: 1100px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; color: white; }
+        .btn-add { background: var(--primary); }
+        .btn-del { background: var(--danger); padding: 5px 10px; font-size: 12px; }
+        .btn-report { background: #8e44ad; text-decoration: none; display: inline-block; padding: 10px 20px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: var(--dark); color: white; padding: 12px; text-align: center; }
+        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
+        
+        .status-badge { padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .present { background: #e8f5e9; color: #2e7d32; }
+        .absent { background: #ffebee; color: #c62828; }
+        
+        .input-group { background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; flex: 1; }
+        
+        .copy-link { color: var(--primary); cursor: pointer; font-size: 18px; }
+        .copy-link:hover { color: #2980b9; }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <a href="links.html" class="btn-nav" style="background:#34495e;">الروابط</a>
-        <a href="reports.html" class="btn-nav" style="background:#8e44ad;">التقارير</a>
-        <button class="btn-nav" style="background:#e74c3c;" onclick="recordAbsenceAll()">تسجيل غياب المتأخرين</button>
+
+    <div class="admin-card">
+        <div class="header">
+            <h1><i class="fas fa-user-shield"></i> لوحة إدارة ثانوية الصحافة</h1>
+            <div>
+                <a href="reports.html" class="btn btn-report"><i class="fas fa-file-alt"></i> سجل التقارير</a>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="newTeacherName" placeholder="اسم المعلم الجديد...">
+            <input type="text" id="newTeacherID" placeholder="رقم السجل / الهوية...">
+            <button class="btn btn-add" onclick="addTeacher()"><i class="fas fa-plus"></i> إضافة معلم</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>المعلم</th>
+                    <th>رابط الحضور</th>
+                    <th>حضور</th>
+                    <th>انصراف</th>
+                    <th>خروج مؤقت (د)</th>
+                    <th>الحالة</th>
+                    <th>إدارة</th>
+                </tr>
+            </thead>
+            <tbody id="teachersTable">
+                </tbody>
+        </table>
     </div>
-    <h1><i class="fas fa-desktop"></i> لوحة إدارة ثانوية الصحافة</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>المعلم</th>
-                <th>حضور</th>
-                <th>انصراف</th>
-                <th>خروج مؤقت (د)</th>
-                <th>الحالة</th>
-            </tr>
-        </thead>
-        <tbody id="adminTable"></tbody>
-    </table>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
@@ -46,37 +77,71 @@
             appId: "1:1039709774940:web:078351fe5cb90593473299"
         };
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        const db = firebase.database();
 
-        database.ref('teachers').on('value', tSnap => {
-            const ts = tSnap.val();
-            database.ref('attendance/' + today).on('value', aSnap => {
-                const att = aSnap.val() || {};
-                const body = document.getElementById('adminTable');
-                body.innerHTML = "";
-                for(let id in ts) {
-                    const a = att[id];
-                    body.innerHTML += `<tr>
-                        <td><strong>${ts[id].name}</strong></td>
-                        <td>${a?.checkIn || '--:--'}</td>
-                        <td>${a?.checkOut || '--:--'}</td>
-                        <td class="out-badge">${a?.outDuringDay || 0}</td>
-                        <td style="color:${a ? '#27ae60' : '#e74c3c'}">${a ? (a.inStatus || 'حاضر') : 'غائب'}</td>
-                    </tr>`;
-                }
+        // 1. إضافة معلم جديد
+        function addTeacher() {
+            const name = document.getElementById('newTeacherName').value;
+            const id = document.getElementById('newTeacherID').value;
+            if(!name || !id) return alert("يرجى إكمال البيانات");
+
+            db.ref('teachers/' + id).set({ name: name }).then(() => {
+                alert("تمت إضافة المعلم بنجاح");
+                document.getElementById('newTeacherName').value = "";
+                document.getElementById('newTeacherID').value = "";
+            });
+        }
+
+        // 2. حذف معلم نهائياً (هذا سيعطل الرابط فوراً)
+        function deleteTeacher(id, name) {
+            if(confirm(`هل أنت متأكد من حذف ${name}؟ سيتم تعطيل رابط الحضور الخاص به فوراً.`)) {
+                db.ref('teachers/' + id).remove().then(() => {
+                    alert("تم حذف المعلم وتعطيل الرابط.");
+                });
+            }
+        }
+
+        // 3. عرض ومراقبة البيانات
+        const todayKey = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        
+        db.ref('teachers').on('value', snapTeachers => {
+            const teachers = snapTeachers.val() || {};
+            db.ref('attendance/' + todayKey).on('value', snapAttendance => {
+                const attendance = snapAttendance.val() || {};
+                const table = document.getElementById('teachersTable');
+                table.innerHTML = "";
+
+                Object.keys(teachers).forEach(id => {
+                    const t = teachers[id];
+                    const att = attendance[id] || {};
+                    // بناء الرابط
+                    const link = `https://bakr4039-byte.github.io/Hader-App/index.html?id=${id}`;
+
+                    table.innerHTML += `
+                        <tr>
+                            <td><strong>${t.name}</strong><br><small>${id}</small></td>
+                            <td><i class="fas fa-copy copy-link" onclick="copyToClipboard('${link}')" title="نسخ الرابط"></i></td>
+                            <td>${att.checkIn || '--:--'}</td>
+                            <td>${att.checkOut || '--:--'}</td>
+                            <td style="color:#e67e22; font-weight:bold;">${att.outDuringDay || 0}</td>
+                            <td>
+                                <span class="status-badge ${att.inStatus === 'حاضر' ? 'present' : 'absent'}">
+                                    ${att.inStatus || 'لم يحضر'}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-del" onclick="deleteTeacher('${id}', '${t.name}')">
+                                    <i class="fas fa-trash"></i> حذف
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
             });
         });
 
-        function recordAbsenceAll() {
-            if(!confirm("اعتماد غياب جميع من لم يبصم حتى الآن؟")) return;
-            database.ref('teachers').once('value', s => {
-                const teachers = s.val();
-                database.ref('attendance/' + today).once('value', as => {
-                    const att = as.val() || {};
-                    for(let id in teachers) if(!att[id]) database.ref(`attendance/${today}/${id}`).set({ name: teachers[id].name, inStatus: "غائب", checkIn: "غائب" });
-                });
-            });
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => alert("تم نسخ رابط المعلم"));
         }
     </script>
 </body>
