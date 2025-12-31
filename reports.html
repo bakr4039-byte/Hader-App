@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>التقارير المتقدمة - ثانوية الصحافة</title>
+    <title>تقارير الأداء التفصيلية - ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -16,81 +16,80 @@
             --danger: #e74c3c; --warning: #f39c12; --success: #27ae60;
         }
         body { font-family: 'Tajawal', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .report-card { background: white; max-width: 1100px; margin: 0 auto; padding: 25px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
+        .report-card { background: white; max-width: 1300px; margin: 0 auto; padding: 25px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.1); }
         
         .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
-        
-        /* قسم اختيار التاريخ */
-        .date-range-picker { display: flex; justify-content: center; gap: 15px; align-items: center; background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        input[type="date"] { padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: 'Tajawal'; }
+        .header h1 { color: var(--purple); font-size: 28px; }
 
-        /* أزرار الفلترة */
-        .filter-buttons { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-        .btn-filter { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; font-family: 'Tajawal'; transition: 0.3s; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .btn-filter:hover { opacity: 0.8; transform: translateY(-2px); }
-        
-        .f-all { background-color: var(--dark-navy); }
-        .f-absent { background-color: var(--danger); }
-        .f-late { background-color: var(--warning); }
-        .f-early { background-color: #d35400; }
-        .f-nocheckout { background-color: #7f8c8d; }
+        .date-range-picker { display: flex; justify-content: center; gap: 15px; align-items: center; background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #eee; flex-wrap: wrap; }
+        input[type="date"] { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Tajawal'; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background-color: #f2f2f2; padding: 12px; border: 1px solid #ddd; color: var(--dark-navy); }
-        td { padding: 12px; border: 1px solid #ddd; text-align: center; font-size: 15px; }
-        
-        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
-        .bg-absent { background: #fee2e2; color: #b91c1c; }
-        .bg-late { background: #fef3c7; color: #92400e; }
-        .bg-success { background: #dcfce7; color: #166534; }
+        .btn-analyze { background-color: var(--purple); color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
+        .btn-analyze:hover { background-color: #732d91; transform: scale(1.02); }
 
-        @media print { .nav-header, .date-range-picker, .filter-buttons, .print-btn { display: none; } }
+        .table-container { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; background: white; min-width: 1000px; }
+        th { background-color: var(--dark-navy); color: white; padding: 15px 10px; border: 1px solid #2c3e50; font-size: 13px; }
+        td { padding: 12px 8px; border: 1px solid #eee; text-align: center; font-size: 14px; }
+        
+        /* تلوين الأعمدة */
+        .col-late { background-color: #fff9f0; } /* خلفية خفيفة للتأخير */
+        .col-early { background-color: #f0f7ff; } /* خلفية خفيفة للخروج المبكر */
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 12px; display: inline-block; }
+        .count-badge { background: #e0e0e0; color: #333; }
+        .time-badge { background: #fee2e2; color: #b91c1c; }
+        .early-badge { background: #e1f5fe; color: #0277bd; }
+
+        .print-btn { margin-top: 30px; background-color: var(--success); color: white; border: none; padding: 12px 40px; border-radius: 8px; cursor: pointer; font-weight: bold; display: block; margin-left: auto; margin-right: auto; }
+
+        @media print { .nav-header, .date-range-picker, .print-btn { display: none; } }
     </style>
 </head>
 <body>
 
     <div class="report-card">
         <div class="header">
-            <h1><i class="fas fa-file-invoice" style="color: var(--purple);"></i> نظام التقارير المتقدم</h1>
-            <p>ثانوية الصحافة الأهلية</p>
+            <h1><i class="fas fa-chart-line"></i> سجل الإحصائيات الزمنية والرقمية</h1>
+            <p>ثانوية الصحافة الأهلية - نظام حاضر</p>
         </div>
 
         <div class="date-range-picker">
-            <label>من تاريخ:</label>
-            <input type="date" id="startDate">
-            <label>إلى تاريخ:</label>
-            <input type="date" id="endDate">
-            <button class="btn-filter f-all" onclick="fetchAllDataInRange()" style="background: var(--blue)">
-                <i class="fas fa-sync-alt"></i> جلب البيانات
+            <label>الفترة من:</label>
+            <input type="date" id="start">
+            <label>إلى:</label>
+            <input type="date" id="end">
+            <button class="btn-analyze" onclick="startAnalysis()">
+                <i class="fas fa-sync-alt"></i> تحليل البيانات وتوليد التقرير
             </button>
         </div>
 
-        <div class="filter-buttons">
-            <button class="btn-filter f-all" onclick="filterResults('all')"><i class="fas fa-list"></i> الكل</button>
-            <button class="btn-filter f-absent" onclick="filterResults('absent')"><i class="fas fa-user-times"></i> الغياب</button>
-            <button class="btn-filter f-late" onclick="filterResults('late')"><i class="fas fa-clock"></i> التأخير</button>
-            <button class="btn-filter f-early" onclick="filterResults('early')"><i class="fas fa-walking"></i> خروج مبكر</button>
-            <button class="btn-filter f-nocheckout" onclick="filterResults('nocheckout')"><i class="fas fa-sign-out-alt"></i> لم ينصرف</button>
-        </div>
-
-        <div style="overflow-x: auto;">
+        <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>التاريخ</th>
-                        <th>المعلم</th>
-                        <th>الحضور</th>
-                        <th>الانصراف</th>
-                        <th>تأخير (د)</th>
-                        <th>مبكر (د)</th>
-                        <th>الحالة</th>
+                        <th rowspan="2" style="width: 150px;">المعلم</th>
+                        <th colspan="2">الأيام العامة</th>
+                        <th colspan="2" class="col-late">التأخر عن الحضور</th>
+                        <th colspan="2" class="col-early">الخروج المبكر</th>
+                        <th rowspan="2">لم ينصرف (يوم)</th>
+                    </tr>
+                    <tr>
+                        <th>حضور</th>
+                        <th>غياب</th>
+                        <th class="col-late">عدد المرات</th>
+                        <th class="col-late">إجمالي الدقائق</th>
+                        <th class="col-early">عدد المرات</th>
+                        <th class="col-early">إجمالي الدقائق</th>
                     </tr>
                 </thead>
-                <tbody id="reportBody">
-                    <tr><td colspan="7">حدد التاريخ واضغط جلب البيانات</td></tr>
+                <tbody id="resBody">
+                    <tr><td colspan="8" style="padding:40px; color:#999;">الرجاء تحديد الفترة والضغط على زر التحليل</td></tr>
                 </tbody>
             </table>
         </div>
+
+        <button class="print-btn" onclick="window.print()"><i class="fas fa-print"></i> طباعة كـ PDF</button>
     </div>
 
     <script>
@@ -106,77 +105,78 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        let fullRawData = []; // لتخزين البيانات المجلوبة مؤقتاً للفلترة
+        async function startAnalysis() {
+            const sIn = document.getElementById('start').value;
+            const eIn = document.getElementById('end').value;
+            if(!sIn || !eIn) return alert("حدد التاريخ أولاً");
 
-        async function fetchAllDataInRange() {
-            const start = new Date(document.getElementById('startDate').value);
-            const end = new Date(document.getElementById('endDate').value);
-            const reportBody = document.getElementById('reportBody');
-
-            if (!start || !end || isNaN(start.getTime())) return alert("يرجى تحديد التاريخ بشكل صحيح");
-
-            reportBody.innerHTML = '<tr><td colspan="7">جاري المعالجة...</td></tr>';
-            fullRawData = [];
+            const startDate = new Date(sIn);
+            const endDate = new Date(eIn);
+            const resBody = document.getElementById('resBody');
+            resBody.innerHTML = '<tr><td colspan="8">جاري الحساب...</td></tr>';
 
             const snapshot = await database.ref('attendance').once('value');
-            const allAttendance = snapshot.val();
+            const dbData = snapshot.val();
+            if(!dbData) { resBody.innerHTML = '<tr><td colspan="8">لا توجد بيانات</td></tr>'; return; }
 
-            if (!allAttendance) {
-                reportBody.innerHTML = '<tr><td colspan="7">لا توجد بيانات</td></tr>';
-                return;
-            }
+            let stats = {};
 
-            // فحص كل يوم في قاعدة البيانات
-            Object.keys(allAttendance).forEach(dateStr => {
-                // تحويل تاريخ Firebase (DD-MM-YYYY) إلى كائن تاريخ للمقارنة
-                const parts = dateStr.split('-');
-                const currentDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            Object.keys(dbData).forEach(dateStr => {
+                const p = dateStr.split('-');
+                const current = new Date(p[2], p[1]-1, p[0]);
 
-                if (currentDate >= start && currentDate <= end) {
-                    const dailyRecords = allAttendance[dateStr];
-                    Object.keys(dailyRecords).forEach(tId => {
-                        fullRawData.push({
-                            date: dateStr,
-                            id: tId,
-                            ...dailyRecords[tId]
-                        });
+                if(current >= startDate && current <= endDate) {
+                    const dayLogs = dbData[dateStr];
+                    Object.keys(dayLogs).forEach(tId => {
+                        const log = dayLogs[tId];
+                        if(!stats[tId]) stats[tId] = { name: log.name, present:0, absent:0, lateTimes:0, lateMins:0, earlyTimes:0, earlyMins:0, noOut:0 };
+
+                        if(log.inStatus === "غائب") {
+                            stats[tId].absent++;
+                        } else {
+                            stats[tId].present++;
+                            // حساب التأخر
+                            if(Number(log.lateMins) > 0) {
+                                stats[tId].lateTimes++;
+                                stats[tId].lateMins += Number(log.lateMins);
+                            }
+                            // حساب الخروج المبكر
+                            if(Number(log.earlyMins) > 0) {
+                                stats[tId].earlyTimes++;
+                                stats[tId].earlyMins += Number(log.earlyMins);
+                            }
+                            // حساب لم ينصرف
+                            if(!log.checkOut || log.checkOut === "") {
+                                stats[tId].noOut++;
+                            }
+                        }
                     });
                 }
             });
 
-            filterResults('all');
+            renderTable(stats);
         }
 
-        function filterResults(type) {
-            const reportBody = document.getElementById('reportBody');
-            let filtered = [];
+        function renderTable(stats) {
+            const body = document.getElementById('resBody');
+            body.innerHTML = "";
+            const ids = Object.keys(stats);
+            if(ids.length === 0) { body.innerHTML = '<tr><td colspan="8">لا نتائج للفترة المختارة</td></tr>'; return; }
 
-            if (type === 'all') filtered = fullRawData;
-            else if (type === 'absent') filtered = fullRawData.filter(r => r.inStatus === "غائب");
-            else if (type === 'late') filtered = fullRawData.filter(r => Number(r.lateMins) > 0);
-            else if (type === 'early') filtered = fullRawData.filter(r => Number(r.earlyMins) > 0);
-            else if (type === 'nocheckout') filtered = fullRawData.filter(r => !r.checkOut && r.inStatus !== "غائب");
-
-            if (filtered.length === 0) {
-                reportBody.innerHTML = '<tr><td colspan="7">لم يتم العثور على نتائج تطابق هذا الفلتر</td></tr>';
-                return;
-            }
-
-            reportBody.innerHTML = filtered.map(r => `
-                <tr>
-                    <td>${r.date}</td>
-                    <td><strong>${r.name}</strong></td>
-                    <td>${r.checkIn || '--:--'}</td>
-                    <td>${r.checkOut || '--:--'}</td>
-                    <td class="${r.lateMins > 0 ? 'badge bg-late' : ''}">${r.lateMins || 0}</td>
-                    <td>${r.earlyMins || 0}</td>
-                    <td>
-                        <span class="badge ${r.inStatus === 'غائب' ? 'bg-absent' : 'bg-success'}">
-                            ${r.inStatus || 'منضبط'}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
+            ids.forEach(id => {
+                const s = stats[id];
+                body.innerHTML += `
+                    <tr>
+                        <td><strong>${s.name}</strong><br><small>${id}</small></td>
+                        <td><span class="badge" style="background:#e8f5e9; color:#2e7d32">${s.present}</span></td>
+                        <td><span class="badge" style="background:#ffebee; color:#c62828">${s.absent}</span></td>
+                        <td class="col-late"><span class="badge count-badge">${s.lateTimes}</span></td>
+                        <td class="col-late"><span class="badge time-badge">${s.lateMins}</span></td>
+                        <td class="col-early"><span class="badge count-badge">${s.earlyTimes}</span></td>
+                        <td class="col-early"><span class="badge early-badge">${s.earlyMins}</span></td>
+                        <td><span class="badge" style="background:#eee;">${s.noOut}</span></td>
+                    </tr>`;
+            });
         }
     </script>
 </body>
