@@ -3,153 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة الروابط - ثانوية الصحافة</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>روابط التبصيم - ثانوية الصحافة</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        :root {
-            --dark-navy: #34495e;
-            --whatsapp-green: #25D366;
-            --blue-copy: #3498db;
-            --danger-red: #e74c3c;
-        }
-        body { font-family: 'Tajawal', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 10px; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); width: 100%; max-width: 850px; text-align: center; }
+        :root { --primary: #1a237e; --accent: #3f51b5; --bg: #f4f7f6; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 0; }
         
-        h1 { color: #2c3e50; margin-bottom: 25px; font-size: 26px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 800px; margin: -20px auto 50px; padding: 0 15px; }
 
-        .input-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
-        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 200px; text-align: center; font-family: 'Tajawal'; font-size: 15px; }
+        /* صندوق البحث */
+        .search-box { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
+        .search-box i { color: #999; }
+        .search-box input { flex: 1; border: none; padding: 10px; font-family: 'Tajawal'; font-size: 16px; outline: none; }
+
+        /* كروت المعلمين */
+        .links-list { display: flex; flex-direction: column; gap: 12px; }
+        .link-card { background: white; padding: 15px 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); transition: 0.3s; }
+        .link-card:hover { transform: scale(1.01); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
         
-        .btn-add { background-color: var(--dark-navy); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .teacher-info { display: flex; align-items: center; gap: 12px; }
+        .teacher-info i { color: var(--accent); font-size: 20px; }
+        .teacher-name { font-weight: bold; color: #333; }
 
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 600px; }
-        th { border-bottom: 2px solid #f0f0f0; padding: 15px; color: #7f8c8d; }
-        td { padding: 15px; border-bottom: 1px solid #f9f9f9; vertical-align: middle; }
-
-        /* تنسيق أزرار الإجراءات */
-        .action-btns { display: flex; gap: 8px; justify-content: center; }
-        .btn-action { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Tajawal'; font-size: 13px; display: flex; align-items: center; gap: 5px; color: white; transition: 0.2s; }
+        .btn-group { display: flex; gap: 8px; }
+        .btn-action { padding: 8px 15px; border: none; border-radius: 10px; cursor: pointer; font-family: 'Tajawal'; font-size: 13px; font-weight: bold; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
         
-        .btn-whatsapp { background-color: var(--whatsapp-green); }
-        .btn-copy { background-color: var(--blue-copy); }
-        .btn-delete { background-color: var(--danger-red); }
-        .btn-action:hover { opacity: 0.8; transform: scale(1.05); }
+        .btn-copy { background: #e3f2fd; color: #1976d2; }
+        .btn-copy:active { background: #bbdefb; }
+        .btn-open { background: #f1f8e9; color: #388e3c; text-decoration: none; }
 
-        .back-link { margin-top: 30px; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--blue-copy); font-weight: bold; }
+        .nav-back { margin-bottom: 15px; display: block; color: white; text-decoration: none; font-size: 14px; opacity: 0.9; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>إدارة قاعدة الروابط المعتمدة <i class="fas fa-link"></i></h1>
-        
-        <div class="input-group">
-            <input type="text" id="tName" placeholder="اسم المعلم الجديد">
-            <input type="text" id="tID" placeholder="الرقم الوظيفي">
-            <button class="btn-add" onclick="addTeacher()">إضافة للمعلمين</button>
+    <div class="header">
+        <div class="container" style="margin:0 auto">
+            <a href="admin.html" class="nav-back"><i class="fas fa-arrow-right"></i> العودة للوحة الإدارة</a>
+            <h1><i class="fas fa-share-nodes"></i> روابط بصمة المعلمين</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="teacherSearch" placeholder="ابحث عن اسم المعلم..." onkeyup="filterLinks()">
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>المعلم</th>
-                        <th>الرقم الوظيفي</th>
-                        <th>إجراءات الإرسال والحذف</th>
-                    </tr>
-                </thead>
-                <tbody id="teacherTable">
-                    <tr><td colspan="3">جاري جلب القائمة...</td></tr>
-                </tbody>
-            </table>
+        <div id="linksContainer" class="links-list">
+            <div style="text-align:center; padding:50px; color:#999;">جاري جلب قائمة المعلمين...</div>
         </div>
-
-        <a href="admin.html" class="back-link">
-            <i class="fas fa-arrow-right"></i> العودة للوحة الإدارة
-        </a>
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
-            authDomain: "hader-system.firebaseapp.com",
-            databaseURL: "https://hader-system-default-rtdb.firebaseio.com/", 
-            projectId: "hader-system",
-            storageBucket: "hader-system.firebasestorage.app",
-            messagingSenderId: "1039709774940",
-            appId: "1:1039709774940:web:078351fe5cb90593473299"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(config);
+        const db = firebase.database();
 
-        // إضافة معلم جديد لـ Firebase
-        function addTeacher() {
-            const name = document.getElementById('tName').value;
-            const id = document.getElementById('tID').value;
-            if(!name || !id) return alert("يرجى تعبئة جميع الخانات");
+        // جلب البيانات من Firebase
+        db.ref('teachers').on('value', snap => {
+            const teachers = snap.val() || {};
+            const container = document.getElementById('linksContainer');
+            container.innerHTML = "";
 
-            database.ref('teachers/' + id).set({ name: name, id: id })
-            .then(() => {
-                document.getElementById('tName').value = '';
-                document.getElementById('tID').value = '';
-                alert("تمت الإضافة بنجاح");
+            Object.keys(teachers).forEach(id => {
+                const name = teachers[id].name;
+                const link = `https://bakr4039-byte.github.io/Hader-App/index.html?id=${id}`;
+
+                container.innerHTML += `
+                    <div class="link-card" data-name="${name}">
+                        <div class="teacher-info">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="teacher-name">${name}</span>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn-action btn-copy" onclick="copyLink('${link}')">
+                                <i class="fas fa-copy"></i> نسخ
+                            </button>
+                            <a href="${link}" target="_blank" class="btn-action btn-open">
+                                <i class="fas fa-external-link-alt"></i> فتح
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        // وظيفة البحث
+        function filterLinks() {
+            const query = document.getElementById('teacherSearch').value.toLowerCase();
+            const cards = document.querySelectorAll('.link-card');
+            
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name').toLowerCase();
+                card.style.display = name.includes(query) ? 'flex' : 'none';
             });
         }
 
-        // عرض المعلمين وتوليد روابطهم
-        database.ref('teachers').on('value', (snapshot) => {
-            const list = snapshot.val();
-            const tableBody = document.getElementById('teacherTable');
-            tableBody.innerHTML = "";
-            if (!list) { tableBody.innerHTML = '<tr><td colspan="3">القائمة فارغة حالياً</td></tr>'; return; }
-
-            for (let id in list) {
-                const teacher = list[id];
-                const baseUrl = "https://bakr4039-byte.github.io/Hader-App/index.html";
-                const teacherLink = `${baseUrl}?id=${id}&name=${encodeURIComponent(teacher.name)}`;
-
-                tableBody.innerHTML += `
-                    <tr>
-                        <td><strong>${teacher.name}</strong></td>
-                        <td>${id}</td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="btn-action btn-whatsapp" onclick="sendWhatsApp('${teacher.name}', '${teacherLink}')">
-                                    <i class="fab fa-whatsapp"></i> واتساب
-                                </button>
-                                <button class="btn-action btn-copy" onclick="copyToClipboard('${teacherLink}')">
-                                    <i class="fas fa-copy"></i> نسخ
-                                </button>
-                                <button class="btn-action btn-delete" onclick="deleteTeacher('${id}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>`;
-            }
-        });
-
-        // وظيفة إرسال واتساب
-        function sendWhatsApp(name, link) {
-            const message = `السلام عليكم أستاذ ${name}، هذا هو رابط تسجيل الحضور والانصراف الخاص بك في ثانوية الصحافة:\n${link}`;
-            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-        }
-
-        // وظيفة النسخ اليدوي
-        function copyToClipboard(link) {
-            navigator.clipboard.writeText(link).then(() => alert("تم نسخ الرابط بنجاح"));
-        }
-
-        // حذف معلم
-        function deleteTeacher(id) {
-            if (confirm("حذف هذا المعلم نهائياً؟")) database.ref('teachers/' + id).remove();
+        // وظيفة النسخ
+        function copyLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert("✅ تم نسخ الرابط بنجاح! يمكنك الآن إرساله للمعلم عبر الواتساب.");
+            });
         }
     </script>
 </body>
