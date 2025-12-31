@@ -3,70 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <title>تقارير ثانوية الصحافة</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 15px; max-width: 1000px; margin: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .header { text-align: center; color: #8e44ad; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
-        th { background: #34495e; color: white; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .stat { background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .stat h3 { font-size: 12px; margin: 0; color: #7f8c8d; }
+        .stat p { font-size: 20px; font-weight: bold; margin: 5px 0 0; }
+        table { width: 100%; background: white; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #eee; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1 class="header">التقرير الإحصائي العام</h1>
-        <div style="text-align:center; background:#f9f9f9; padding:15px; border-radius:10px;">
-            من: <input type="date" id="s"> إلى: <input type="date" id="e">
-            <button onclick="calc()" style="padding:8px 25px; cursor:pointer; background:#8e44ad; color:white; border:none; border-radius:5px;">تحليل البيانات</button>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>المعلم</th>
-                    <th>أيام الحضور</th>
-                    <th>أيام الغياب</th>
-                    <th>إجمالي دقائق الخروج المؤقت</th>
-                </tr>
-            </thead>
-            <tbody id="res"></tbody>
-        </table>
+    <div class="grid">
+        <div class="stat"><h3>الغياب</h3><p id="sA">0</p></div>
+        <div class="stat"><h3>التأخير (د)</h3><p id="sL">0</p></div>
+        <div class="stat"><h3>خروج مبكر (د)</h3><p id="sE">0</p></div>
+        <div class="stat"><h3>تم الانصراف</h3><p id="sC">0</p></div>
     </div>
+    <input type="date" id="D" onchange="load()">
+    <table>
+        <thead><tr><th>المعلم</th><th>حضور</th><th>انصراف</th><th>تأخير</th><th>خروج مبكر</th></tr></thead>
+        <tbody id="B"></tbody>
+    </table>
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
-            authDomain: "hader-system.firebaseapp.com",
-            databaseURL: "https://hader-system-default-rtdb.firebaseio.com/", 
-            projectId: "hader-system",
-            appId: "1:1039709774940:web:078351fe5cb90593473299"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        function calc() {
-            const start = new Date(document.getElementById('s').value);
-            const end = new Date(document.getElementById('e').value);
-            database.ref('attendance').once('value', s => {
-                const all = s.val();
-                let stats = {};
-                for(let date in all) {
-                    const p = date.split('-');
-                    const d = new Date(p[2], p[1]-1, p[0]);
-                    if(d >= start && d <= end) {
-                        for(let id in all[date]) {
-                            const r = all[date][id];
-                            if(!stats[id]) stats[id] = { name: r.name, p:0, a:0, om:0 };
-                            if(r.inStatus === "غائب") stats[id].a++;
-                            else { stats[id].p++; stats[id].om += Number(r.outDuringDay || 0); }
+        const conf = { apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw", databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(conf); const db = firebase.database();
+        const START = "07:00", END = "13:00";
+        function load() {
+            const d = document.getElementById('D').value.split('-').reverse().join('-');
+            db.ref('teachers').once('value', st => {
+                db.ref('attendance/' + d).once('value', sa => {
+                    const ts = st.val() || {}, att = sa.val() || {};
+                    let a=0, l=0, e=0, c=0, h="";
+                    Object.keys(ts).forEach(id => {
+                        const r = att[id];
+                        if(!r) { a++; h += `<tr style="color:red"><td>${ts[id].name}</td><td colspan="4">غائب</td></tr>`; }
+                        else {
+                            if(r.checkOut) c++;
+                            const lat = diff(START, r.checkIn); l += lat;
+                            const ear = diff(r.checkOut || END, END); e += ear;
+                            h += `<tr><td>${ts[id].name}</td><td>${r.checkIn||'-'}</td><td>${r.checkOut||'-'}</td><td>${lat}</td><td>${ear}</td></tr>`;
                         }
-                    }
-                }
-                document.getElementById('res').innerHTML = Object.keys(stats).map(id => `
-                    <tr><td>${stats[id].name}</td><td>${stats[id].p}</td><td>${stats[id].a}</td><td>${stats[id].om}</td></tr>
-                `).join('');
+                    });
+                    document.getElementById('B').innerHTML = h;
+                    document.getElementById('sA').innerText = a; document.getElementById('sL').innerText = l;
+                    document.getElementById('sE').innerText = e; document.getElementById('sC').innerText = c;
+                });
             });
+        }
+        function diff(s, e) {
+            if(!s || !e) return 0;
+            const [h1, m1] = s.split(':').map(Number); const [h2, m2] = e.split(':').map(Number);
+            const d = (h2*60+m2)-(h1*60+m1); return d > 0 ? d : 0;
         }
     </script>
 </body>
