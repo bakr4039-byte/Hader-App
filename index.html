@@ -19,16 +19,21 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; z-index: 100; margin-top: -30px; display: none; }
-        #map { height: 250px; width: 100%; max-width: 400px; border-radius: 20px; margin-bottom: 10px; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .live-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 10px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .live-info span { margin: 0 10px; font-weight: bold; }
+        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; z-index: 100; margin-top: -10px; display: none; }
+        #map { height: 200px; width: 100%; max-width: 400px; border-radius: 20px; margin-bottom: 10px; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; transition: 0.3s; }
         .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; } .btn-p { background: #3498db; } .btn-p.active { background: #e67e22; }
         .loader { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; justify-content: center; align-items: center; flex-direction: column; }
-        .error { display: none; text-align: center; margin-top: 50px; padding: 30px; background: white; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 400px; }
     </style>
 </head>
 <body>
-    <div id="L" class="loader"><i class="fas fa-spinner fa-spin fa-3x" style="color:#3498db"></i><p>جاري التحقق...</p></div>
+    <div id="L" class="loader"><i class="fas fa-spinner fa-spin fa-3x" style="color:#3498db"></i><p>جاري التحقق من الصلاحية...</p></div>
+    <div class="live-info" id="timeBar" style="display:none;">
+        <i class="far fa-clock"></i> <span id="liveTime">00:00:00</span>
+        <i class="far fa-calendar-alt"></i> <span id="liveDate">--/--/----</span>
+    </div>
     <div id="App" style="display: none; width: 100%; flex-direction: column; align-items: center;">
         <div id="map"></div>
         <div class="container" id="C">
@@ -38,13 +43,19 @@
             <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
     </div>
-    <div id="Err" class="error"><i class="fas fa-user-lock" style="font-size:50px;color:#e74c3c"></i><h2>الرابط غير مفعّل</h2><p>تم تعطيل صلاحية هذا الرابط من قبل الإدارة.</p></div>
-
     <script>
         const conf = { apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw", databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(conf); const db = firebase.database();
         const SLAT = 24.8001897, SLNG = 46.6449937, DIST = 150;
         const ID = new URLSearchParams(window.location.search).get('id');
+
+        function updateClock() {
+            const now = new Date();
+            const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            document.getElementById('liveTime').innerText = now.toLocaleTimeString('en-GB');
+            document.getElementById('liveDate').innerText = days[now.getDay()] + " " + now.toLocaleDateString('en-GB');
+        }
+        setInterval(updateClock, 1000);
 
         if (ID) {
             db.ref('teachers/' + ID).once('value').then(s => {
@@ -52,9 +63,10 @@
                 if (s.exists()) {
                     document.getElementById('App').style.display = 'flex';
                     document.getElementById('C').style.display = 'block';
+                    document.getElementById('timeBar').style.display = 'block';
                     document.getElementById('TN').innerText = "مرحباً: " + s.val().name;
                     initM();
-                } else { document.getElementById('Err').style.display = 'block'; }
+                } else { document.body.innerHTML = "<h2 style='text-align:center;margin-top:100px;'>الرابط معطل أو غير نشط</h2>"; }
             });
         }
 
@@ -62,7 +74,8 @@
         function initM() {
             M = L.map('map').setView([SLAT, SLNG], 17);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(M);
-            L.circle([SLAT, SLNG], { radius: DIST, color: '#3498db' }).addTo(M);
+            L.marker([SLAT, SLNG]).addTo(M).bindPopup('ثانوية الصحافة').openPopup();
+            L.circle([SLAT, SLNG], { radius: DIST, color: '#3498db', fillOpacity: 0.1 }).addTo(M);
         }
 
         function H(t) {
@@ -73,9 +86,9 @@
                     const now = new Date(); const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
                     const dk = now.toLocaleDateString('en-GB').replace(/\//g, '-');
                     db.ref(`attendance/${dk}/${ID}`).update({ name: document.getElementById('TN').innerText.replace('مرحباً: ', ''), [t === 'حضور' ? 'checkIn' : 'checkOut']: time, inStatus: "حاضر" })
-                    .then(() => { alert(`تم تسجيل ${t}`); if(t === 'حضور') document.getElementById('PS').style.display = 'block'; });
-                } else { alert(`بعيد ${Math.round(d)} متر`); }
-            });
+                    .then(() => { alert(`✅ تم تسجيل ${t}`); if(t === 'حضور') document.getElementById('PS').style.display = 'block'; });
+                } else { alert(`أنت خارج نطاق المدرسة بمسافة ${Math.round(d)} متر`); }
+            }, () => alert("يرجى تفعيل الـ GPS"));
         }
 
         function getD(la1, lo1, la2, lo2) {
@@ -86,14 +99,14 @@
 
         let ST = null;
         function MP() {
-            const b = document.getElementById('permBtn'); const dk = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-            if (!ST) { ST = new Date(); b.classList.add('active'); b.innerText = 'إنهاء الاستئذان'; }
+            const b = document.getElementById('PB'); const dk = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+            if (!ST) { if(!confirm("بدء خروج مؤقت؟")) return; ST = new Date(); b.classList.add('active'); b.innerText = 'إنهاء الاستئذان (عودة)'; }
             else {
                 const diff = Math.round((new Date() - ST) / 60000);
                 db.ref(`attendance/${dk}/${ID}`).once('value').then(s => {
                     const cur = s.val().outDuringDay || 0;
                     db.ref(`attendance/${dk}/${ID}`).update({ outDuringDay: cur + diff }).then(() => {
-                        alert(`تمت العودة. المدة: ${diff} دقيقة`); ST = null; b.classList.remove('active');
+                        alert(`تمت العودة. المدة: ${diff} دقيقة`); ST = null; b.classList.remove('active'); b.innerText = 'استئذان / خروج مؤقت';
                     });
                 });
             }

@@ -2,70 +2,69 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تقارير ثانوية الصحافة</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
-        body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
-        .container { max-width: 1100px; margin: auto; }
-        
-        /* تصميم صناديق الإحصائيات */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #3498db; }
-        .stat-card h3 { font-size: 13px; color: #7f8c8d; margin: 0; }
-        .stat-card p { font-size: 22px; font-weight: bold; margin: 10px 0 0; color: #2c3e50; }
-        .absent { border-top-color: #e74c3c; }
-        .late { border-top-color: #f39c12; }
-        .success { border-top-color: #27ae60; }
-
-        .filter-sec { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        input[type="date"] { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Tajawal'; }
-        
-        table { width: 100%; background: white; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        th { background: #2c3e50; color: white; padding: 15px; font-size: 14px; }
-        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 14px; }
-        .row-absent { background-color: #fff5f5; color: #c53030; }
+        body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #3498db; }
+        .stat h3 { font-size: 13px; color: #7f8c8d; margin: 0; }
+        .stat p { font-size: 24px; font-weight: bold; margin: 10px 0 0; color: #2c3e50; }
+        table { width: 100%; background: white; border-collapse: collapse; margin-top: 20px; border-radius: 12px; overflow: hidden; }
+        th { background: #2c3e50; color: white; padding: 12px; }
+        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
     </style>
 </head>
 <body>
-
-    <div class="container">
-        <h2 style="text-align:center;"><i class="fas fa-file-invoice"></i> نظام التقارير الذكي - ثانوية الصحافة</h2>
-
-        <div class="filter-sec">
-            <label>عرض تقرير تاريخ:</label>
-            <input type="date" id="reportDate" onchange="loadReport()">
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card"><h3>إجمالي المعلمين</h3><p id="sTotal">0</p></div>
-            <div class="stat-card absent"><h3>عدد الغياب</h3><p id="sAbs">0</p></div>
-            <div class="stat-card success"><h3>تم الانصراف</h3><p id="sOut">0</p></div>
-            <div class="stat-card late"><h3>حالات التأخير</h3><p id="sLateCount">0</p></div>
-            <div class="stat-card late"><h3>دقائق التأخير</h3><p id="sLateMins">0</p></div>
-            <div class="stat-card absent"><h3>خروج مبكر (د)</h3><p id="sEarlyMins">0</p></div>
-        </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>المعلم</th>
-                    <th>الحضور</th>
-                    <th>الانصراف</th>
-                    <th>تأخير (د)</th>
-                    <th>خروج مبكر (د)</th>
-                    <th>خروج مؤقت (د)</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+    <h2 style="text-align:center;">ملخص تقارير الحضور</h2>
+    <div style="text-align:center; margin-bottom:20px;">
+        <input type="date" id="D" onchange="load()">
     </div>
-
-    <script src="reports-script.js"></script>
+    <div class="grid">
+        <div class="stat"><h3>الغياب</h3><p id="sA">0</p></div>
+        <div class="stat"><h3>دقائق التأخير</h3><p id="sL">0</p></div>
+        <div class="stat"><h3>خروج مبكر (د)</h3><p id="sE">0</p></div>
+        <div class="stat"><h3>تم الانصراف</h3><p id="sC">0</p></div>
+    </div>
+    <table>
+        <thead><tr><th>المعلم</th><th>حضور</th><th>انصراف</th><th>تأخير (د)</th><th>مبكر (د)</th><th>خروج مؤقت (د)</th></tr></thead>
+        <tbody id="B"></tbody>
+    </table>
+    <script>
+        const conf = { apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw", databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(conf); const db = firebase.database();
+        const START = "07:00", END = "13:00";
+        document.getElementById('D').valueAsDate = new Date();
+        function load() {
+            const d = document.getElementById('D').value.split('-').reverse().join('-');
+            db.ref('teachers').once('value', st => {
+                db.ref('attendance/' + d).once('value', sa => {
+                    const ts = st.val() || {}, att = sa.val() || {};
+                    let a=0, l=0, e=0, c=0, h="";
+                    Object.keys(ts).forEach(id => {
+                        const r = att[id];
+                        if(!r) { a++; h += `<tr style="color:red"><td>${ts[id].name}</td><td colspan="5">غائب</td></tr>`; }
+                        else {
+                            if(r.checkOut) c++;
+                            const lat = diff(START, r.checkIn); l += lat;
+                            const ear = diff(r.checkOut || END, END); e += ear;
+                            h += `<tr><td>${ts[id].name}</td><td>${r.checkIn||'-'}</td><td>${r.checkOut||'-'}</td><td>${lat}</td><td>${ear}</td><td>${r.outDuringDay||0}</td></tr>`;
+                        }
+                    });
+                    document.getElementById('B').innerHTML = h;
+                    document.getElementById('sA').innerText = a; document.getElementById('sL').innerText = l;
+                    document.getElementById('sE').innerText = e; document.getElementById('sC').innerText = c;
+                });
+            });
+        }
+        function diff(s, e) {
+            if(!s || !e) return 0;
+            const [h1, m1] = s.split(':').map(Number); const [h2, m2] = e.split(':').map(Number);
+            const d = (h2*60+m2)-(h1*60+m1); return d > 0 ? d : 0;
+        }
+        load();
+    </script>
 </body>
 </html>

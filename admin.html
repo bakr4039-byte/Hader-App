@@ -3,33 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <title>إدارة ثانوية الصحافة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; padding: 20px; }
-        .card { background: white; max-width: 900px; margin: auto; padding: 20px; border-radius: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
-        .btn-del { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .card { background: white; max-width: 1000px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .time-box { background: #e8f4fd; padding: 10px 20px; border-radius: 10px; color: #3498db; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: center; }
+        th { background: #2c3e50; color: white; padding: 12px; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>إدارة المعلمين</h2>
-        <input type="text" id="tName" placeholder="اسم المعلم">
-        <input type="text" id="tID" placeholder="رقم الهوية">
-        <button onclick="add()">إضافة معلم</button>
-        <a href="reports.html" style="float:left">سجل التقارير</a>
+        <div class="admin-header">
+            <h2>لوحة الإدارة - ثانوية الصحافة</h2>
+            <div class="time-box" id="adminDateTime">جاري التحميل...</div>
+        </div>
+        <div style="background:#f9f9f9; padding:15px; border-radius:10px; margin-bottom:20px;">
+            <input type="text" id="tN" placeholder="اسم المعلم">
+            <input type="text" id="tI" placeholder="رقم الهوية">
+            <button onclick="add()">إضافة معلم جديد</button>
+            <a href="reports.html" style="margin-right:20px; color:#3498db; font-weight:bold;">سجل التقارير</a>
+        </div>
         <table>
-            <thead><tr><th>المعلم</th><th>الرابط</th><th>إدارة</th></tr></thead>
+            <thead><tr><th>المعلم</th><th>رقم الهوية</th><th>رابط التبصيم</th><th>إدارة</th></tr></thead>
             <tbody id="T"></tbody>
         </table>
     </div>
     <script>
         const conf = { apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw", databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(conf); const db = firebase.database();
+        function updateAdminClock() {
+            const now = new Date(); const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            document.getElementById('adminDateTime').innerText = days[now.getDay()] + " | " + now.toLocaleDateString('en-GB') + " | " + now.toLocaleTimeString('en-GB');
+        }
+        setInterval(updateAdminClock, 1000);
         function add() {
-            const n = document.getElementById('tName').value, i = document.getElementById('tID').value;
+            const n = document.getElementById('tN').value, i = document.getElementById('tI').value;
             if(n && i) db.ref('teachers/' + i).set({ name: n }).then(() => location.reload());
         }
         function del(i) { if(confirm("حذف وتعطيل الرابط؟")) db.ref('teachers/' + i).remove().then(() => location.reload()); }
@@ -37,7 +50,7 @@
             const t = s.val() || {}; const tb = document.getElementById('T'); tb.innerHTML = "";
             Object.keys(t).forEach(id => {
                 const link = `https://bakr4039-byte.github.io/Hader-App/index.html?id=${id}`;
-                tb.innerHTML += `<tr><td>${t[id].name}</td><td><button onclick="navigator.clipboard.writeText('${link}')">نسخ</button></td><td><button class="btn-del" onclick="del('${id}')">حذف</button></td></tr>`;
+                tb.innerHTML += `<tr><td><strong>${t[id].name}</strong></td><td>${id}</td><td><button onclick="navigator.clipboard.writeText('${link}'); alert('تم نسخ الرابط')">نسخ</button></td><td><button onclick="del('${id}')" style="color:red">حذف</button></td></tr>`;
             });
         });
     </script>
