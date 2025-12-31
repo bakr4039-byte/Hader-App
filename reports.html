@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تقارير الأداء التجميعية - ثانوية الصحافة</title>
+    <title>تقارير الأداء التفصيلية - ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -16,27 +16,26 @@
         input[type="date"] { padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-family: 'Tajawal'; }
         .btn-search { background: var(--primary); color: white; border: none; padding: 10px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; }
         
-        /* تنسيق الجدول الجديد */
         .table-container { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
         th { background: #1e293b; color: white; padding: 15px; font-size: 13px; }
         td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 500; }
         tr:hover { background-color: #f1f5f9; }
         
-        /* تلوين الأعمدة الإحصائية */
+        /* ألوان الأعمدة الإحصائية */
         .col-abs { color: #e11d48; font-weight: bold; } /* غياب */
         .col-late { color: #d97706; } /* تأخير */
-        .col-no-out { color: #475569; background: #f8fafc; } /* عدم انصراف */
+        .col-early { color: #7c3aed; } /* خروج مبكر */
     </style>
 </head>
 <body>
 
     <div class="filter-card">
-        <h2><i class="fas fa-chart-pie"></i> ملخص أداء المعلمين (إجمالي الفترة)</h2>
+        <h2><i class="fas fa-chart-line"></i> تقرير إحصائيات المعلمين (تجميعي)</h2>
         <div class="input-group">
             من: <input type="date" id="dateF">
             إلى: <input type="date" id="dateT">
-            <button class="btn-search" onclick="generateSummaryReport()">عرض التقرير التجميعي</button>
+            <button class="btn-search" onclick="generateSummaryReport()">عرض وتحليل البيانات</button>
         </div>
     </div>
 
@@ -48,34 +47,40 @@
                     <th style="background:#fff1f2; color:#be123c;">إجمالي الغياب</th>
                     <th style="background:#fffbeb; color:#b45309;">أيام التأخير</th>
                     <th style="background:#fffbeb; color:#b45309;">دقائق التأخير</th>
-                    <th style="background:#f5f3ff; color:#6d28d9;">دقائق خروج مبكر</th>
+                    <th style="background:#f5f3ff; color:#6d28d9;">دقائق الخروج المبكر</th>
                     <th style="background:#f8fafc; color:#334155;">عدم انصراف</th>
                 </tr>
             </thead>
             <tbody id="summaryBody">
-                <tr><td colspan="6">حدد التاريخ واضغط عرض التقرير</td></tr>
+                <tr><td colspan="6">الرجاء اختيار النطاق الزمني للبحث</td></tr>
             </tbody>
         </table>
     </div>
 
     <script>
+        // إعدادات Firebase
         const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(config); const db = firebase.database();
-        const START = "07:00", END = "13:00"; // مواعيد العمل الرسمية
+
+        // --- إعدادات المواعيد الرسمية ---
+        // يمكنك تغيير هذه المواعيد حسب رغبتك
+        const OFFICIAL_START = "07:00"; // موعد الحضور الرسمي
+        const OFFICIAL_END = "13:00";   // موعد الانصراف الرسمي
 
         async function generateSummaryReport() {
-            const start = new Date(document.getElementById('dateF').value);
-            const end = new Date(document.getElementById('dateT').value);
-            if(isNaN(start) || isNaN(end)) return alert("يرجى اختيار تاريخ صحيح");
+            const startStr = document.getElementById('dateF').value;
+            const endStr = document.getElementById('dateT').value;
+            if(!startStr || !endStr) return alert("يرجى اختيار تاريخ البداية والنهاية");
 
+            const start = new Date(startStr);
+            const end = new Date(endStr);
             const body = document.getElementById('summaryBody');
-            body.innerHTML = "<tr><td colspan='6'><i class='fas fa-spinner fa-spin'></i> جاري تحليل البيانات...</td></tr>";
+            body.innerHTML = "<tr><td colspan='6'><i class='fas fa-spinner fa-spin'></i> جاري تحليل البيانات ومقارنة المواعيد...</td></tr>";
 
             const tsSnap = await db.ref('teachers').once('value');
             const teachers = tsSnap.val() || {};
             let teachersStats = {};
 
-            // تجهيز هيكل البيانات لكل معلم
             Object.keys(teachers).forEach(id => {
                 teachersStats[id] = { name: teachers[id].name, abs: 0, latD: 0, latM: 0, earM: 0, noO: 0 };
             });
@@ -89,19 +94,30 @@
                 Object.keys(teachers).forEach(id => {
                     const r = dayAtt[id];
                     if (!r) {
-                        teachersStats[id].abs++; // حساب الغياب
+                        teachersStats[id].abs++; // غياب كامل
                     } else {
-                        const l = calculateDiff(START, r.checkIn);
-                        const e = r.checkOut ? calculateDiff(r.checkOut, END) : 0;
-                        
-                        if (l > 0) { teachersStats[id].latD++; teachersStats[id].latM += l; }
-                        if (e > 0) teachersStats[id].earM += e;
-                        if (r.checkIn && !r.checkOut) teachersStats[id].noO++; // حساب عدم الانصراف
+                        // 1. حساب دقائق التأخير (إذا كان الحضور بعد الموعد الرسمي)
+                        if (r.checkIn) {
+                            const latM = calculateTimeDifference(OFFICIAL_START, r.checkIn);
+                            if (latM > 0) {
+                                teachersStats[id].latD++; // زيادة عدد أيام التأخير
+                                teachersStats[id].latM += latM; // إضافة الدقائق
+                            }
+                        }
+
+                        // 2. حساب دقائق الخروج المبكر (إذا كان الانصراف قبل الموعد الرسمي)
+                        if (r.checkOut) {
+                            const earM = calculateTimeDifference(r.checkOut, OFFICIAL_END);
+                            if (earM > 0) {
+                                teachersStats[id].earM += earM;
+                            }
+                        } else if (r.checkIn) {
+                            teachersStats[id].noO++; // لم يسجل انصراف
+                        }
                     }
                 });
             }
 
-            // عرض النتائج في الجدول
             body.innerHTML = "";
             Object.values(teachersStats).forEach(s => {
                 body.innerHTML += `
@@ -110,18 +126,19 @@
                         <td class="col-abs">${s.abs} يوم</td>
                         <td class="col-late">${s.latD} يوم</td>
                         <td class="col-late">${s.latM} دقيقة</td>
-                        <td style="color:#7c3aed">${s.earM} دقيقة</td>
-                        <td class="col-no-out">${s.noO} مرة</td>
+                        <td class="col-early">${s.earM} دقيقة</td>
+                        <td style="color:#475569">${s.noO} مرة</td>
                     </tr>`;
             });
         }
 
-        function calculateDiff(t1, t2) {
-            if (!t1 || !t2 || t2 === '-') return 0;
-            const [h1, m1] = t1.split(':').map(Number);
-            const [h2, m2] = t2.split(':').map(Number);
-            const d = (h2 * 60 + m2) - (h1 * 60 + m1);
-            return d > 0 ? d : 0;
+        // دالة حساب الفرق بين وقتين بالدقائق
+        function calculateTimeDifference(startTime, endTime) {
+            if (!startTime || !endTime || endTime === '--') return 0;
+            const [h1, m1] = startTime.split(':').map(Number);
+            const [h2, m2] = endTime.split(':').map(Number);
+            const diffInMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
+            return diffInMinutes > 0 ? diffInMinutes : 0;
         }
     </script>
 </body>
