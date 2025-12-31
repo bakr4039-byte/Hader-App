@@ -13,26 +13,33 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; }
-        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .work-hours { background: #fff; width: 100%; max-width: 400px; padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-around; border: 1px solid #e0e0e0; font-size: 13px; }
+        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; font-size: 14px; }
         .in-range { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
         .out-range { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
         .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        #map { height: 200px; width: 100%; border-radius: 20px; margin-bottom: 15px; }
+        #map { height: 200px; width: 100%; border-radius: 20px; margin-bottom: 10px; border: 3px solid white; }
         .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; }
+        .btn-admin { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 12px; z-index: 2000; }
     </style>
 </head>
 <body>
+    <a href="admin.html" class="btn-admin"><i class="fas fa-user-shield"></i> الإدارة</a>
     <div class="header-info" id="topBar" style="display:none;">
         <span style="font-size:18px; font-weight:bold; color:#3498db;" id="liveDay">---</span><br>
         <small id="liveTime">00:00:00</small> | <small id="liveDate">--/--/----</small>
+    </div>
+    <div class="work-hours" id="workHours" style="display:none;">
+        <div><i class="fas fa-sign-in-alt"></i> الحضور: <span id="schIn">--:--</span></div>
+        <div><i class="fas fa-sign-out-alt"></i> الانصراف: <span id="schOut">--:--</span></div>
     </div>
     <div id="rangeStatus" class="range-badge out-range" style="display:none;">جاري تحديد الموقع...</div>
     <div id="App" style="display: none; width: 100%; max-width: 400px;">
         <div id="map"></div>
         <div class="container">
-            <h2 id="TN" style="margin-top:0;">ثانوية الصحافة</h2>
+            <h2 id="TN">ثانوية الصحافة</h2>
             <button class="btn btn-in" onclick="H('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
             <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
@@ -51,15 +58,20 @@
         }
         setInterval(updateClock, 1000);
 
+        db.ref('settings/official_times').on('value', s => {
+            if(s.exists()){ document.getElementById('schIn').innerText = s.val().start; document.getElementById('schOut').innerText = s.val().end; }
+        });
+
         if (ID) {
             db.ref('teachers/' + ID).once('value').then(s => {
                 if (s.exists()) {
                     document.getElementById('App').style.display = 'block';
                     document.getElementById('topBar').style.display = 'block';
+                    document.getElementById('workHours').style.display = 'flex';
                     document.getElementById('rangeStatus').style.display = 'block';
                     document.getElementById('TN').innerText = "مرحباً: " + s.val().name;
                     initM(); startWatching();
-                } else { document.body.innerHTML = "<h2>الرابط غير مفعّل</h2>"; }
+                }
             });
         }
 

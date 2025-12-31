@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة ثانوية الصحافة</title>
+    <title>لوحة إدارة ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -10,19 +10,21 @@
     <style>
         :root { --primary: #3f51b5; --bg: #f4f7f6; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; }
-        .header { background: linear-gradient(135deg, #1a237e, var(--primary)); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 40px 40px; }
-        .container { max-width: 1100px; margin: -30px auto 50px; padding: 0 20px; }
-        .action-bar { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
-        .btn { padding: 12px 25px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: 'Tajawal'; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .header { background: linear-gradient(135deg, #1a237e, var(--primary)); color: white; padding: 35px 20px; text-align: center; border-radius: 0 0 40px 40px; }
+        .container { max-width: 1100px; margin: -25px auto 50px; padding: 0 20px; }
+        .action-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .btn { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; gap: 8px; text-decoration: none; font-family: 'Tajawal'; font-size: 14px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: white; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .stat-card .val { display: block; font-size: 32px; font-weight: bold; color: var(--primary); }
         .table-card { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; padding: 20px; font-size: 14px; color: #7f8c8d; }
-        td { padding: 20px; text-align: center; border-bottom: 1px solid #f1f1f1; }
-        .badge { padding: 6px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        th { background: #f8f9fa; padding: 15px; color: #7f8c8d; font-size: 13px; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f1f1; }
+        .badge { padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: bold; }
         .present { background: #e8f5e9; color: #2e7d32; } .absent { background: #ffebee; color: #c62828; }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
+        .modal-content { background:white; padding:30px; border-radius:20px; width:350px; text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -31,17 +33,13 @@
         <div class="action-bar">
             <a href="links.html" class="btn" style="background:#34495e"><i class="fas fa-link"></i> الروابط</a>
             <a href="reports.html" class="btn" style="background:#8e44ad"><i class="fas fa-file-invoice"></i> التقارير</a>
+            <button class="btn" style="background:#607d8b" onclick="toggleM(true)"><i class="fas fa-cog"></i> الإعدادات</button>
             <button class="btn" style="background:#e67e22" onclick="location.reload()"><i class="fas fa-sync"></i> تحديث</button>
         </div>
         <div class="stats-grid">
-            <div class="stat-card"><i class="fas fa-users"></i><span class="val" id="totalT">0</span>المعلمين</div>
-            <div class="stat-card"><i class="fas fa-user-check" style="color:#2ecc71"></i><span class="val" id="presentT">0</span>حاضرون</div>
-            <div class="stat-card"><i class="fas fa-user-times" style="color:#e74c3c"></i><span class="val" id="absentT">0</span>غائبون</div>
-        </div>
-        <div style="background:white; padding:20px; border-radius:20px; margin-bottom:20px; text-align:center;">
-            <input type="text" id="nN" placeholder="اسم المعلم" style="padding:10px; border-radius:10px; border:1px solid #ddd;">
-            <input type="text" id="nI" placeholder="رقم الهوية" style="padding:10px; border-radius:10px; border:1px solid #ddd;">
-            <button onclick="addT()" style="padding:10px 20px; background:var(--primary); color:white; border:none; border-radius:10px; cursor:pointer;">إضافة معلم</button>
+            <div class="stat-card">إجمالي المعلمين <span class="val" id="totalT">0</span></div>
+            <div class="stat-card">حاضرون الآن <span class="val" id="presentT" style="color:#2ecc71">0</span></div>
+            <div class="stat-card">غائبون <span class="val" id="absentT" style="color:#e74c3c">0</span></div>
         </div>
         <div class="table-card">
             <table>
@@ -50,10 +48,27 @@
             </table>
         </div>
     </div>
+    <div id="setModal" class="modal">
+        <div class="modal-content">
+            <h3>إعدادات مواعيد الدوام</h3>
+            <div style="text-align:right; margin-bottom:15px;">
+                الحضور: <input type="time" id="setIn" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                الانصراف: <input type="time" id="setOut" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
+            </div>
+            <button class="btn" style="background:var(--primary); width:100%; justify-content:center;" onclick="saveSet()">حفظ الإعدادات</button>
+            <button onclick="toggleM(false)" style="margin-top:10px; border:none; background:none; color:#999; cursor:pointer;">إلغاء</button>
+        </div>
+    </div>
     <script>
         const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(config); const db = firebase.database();
-        function addT() { const n=document.getElementById('nN').value, i=document.getElementById('nI').value; if(n&&i) db.ref('teachers/'+i).set({name:n}).then(()=>location.reload()); }
+        function toggleM(s) { document.getElementById('setModal').style.display = s?'flex':'none'; }
+        function saveSet() {
+            const start = document.getElementById('setIn').value, end = document.getElementById('setOut').value;
+            if(!start || !end) return alert("أكمل البيانات");
+            db.ref('settings/official_times').set({ start, end }).then(() => { alert("تم الحفظ"); toggleM(false); });
+        }
+        db.ref('settings/official_times').once('value', s => { if(s.exists()){ document.getElementById('setIn').value=s.val().start; document.getElementById('setOut').value=s.val().end; }});
         setInterval(() => { const now = new Date(); document.getElementById('clock').innerText = now.toLocaleDateString('ar-SA') + " | " + now.toLocaleTimeString('ar-SA'); }, 1000);
         const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
         db.ref('teachers').on('value', sT => {
