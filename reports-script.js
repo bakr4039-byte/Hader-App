@@ -1,84 +1,89 @@
 const firebaseConfig = {
     apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
-    databaseURL: "https://hader-system-default-rtdb.firebaseio.com/", 
+    databaseURL: "https://hader-system-default-rtdb.firebaseio.com/",
     projectId: "hader-system"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// المواعيد الرسمية للمدرسة
-const START_TIME = "07:00"; 
-const END_TIME = "13:00";
+const WORK_START = "07:00"; 
+const WORK_END = "13:00";
 
-// ضبط تاريخ اليوم تلقائياً
-document.getElementById('reportDate').valueAsDate = new Date();
+// تعيين تواريخ اليوم افتراضياً
+document.getElementById('dateFrom').valueAsDate = new Date();
+document.getElementById('dateTo').valueAsDate = new Date();
 
-function loadReport() {
-    const dateInput = document.getElementById('reportDate').value;
-    if(!dateInput) return;
-    const dKey = dateInput.split('-').reverse().join('-'); // تحويل للتنسيق DD-MM-YYYY
-
-    db.ref('teachers').once('value', st => {
-        const teachers = st.val() || {};
-        db.ref('attendance/' + dKey).once('value', sa => {
-            const attData = sa.val() || {};
-            calculateAndRender(teachers, attData);
-        });
-    });
-}
-
-function calculateAndRender(teachers, attendance) {
-    const body = document.getElementById('tableBody');
-    body.innerHTML = "";
+async function fetchRangeReport() {
+    const from = new Date(document.getElementById('dateFrom').value);
+    const to = new Date(document.getElementById('dateTo').value);
     
-    let stats = { total: 0, abs: 0, out: 0, lCount: 0, lMins: 0, eMins: 0 };
-    stats.total = Object.keys(teachers).length;
+    if (from > to) return alert("تاريخ البدء يجب أن يكون قبل تاريخ الانتهاء");
 
-    Object.keys(teachers).forEach(id => {
-        const t = teachers[id];
-        const record = attendance[id] || null;
+    const table = document.getElementById('reportTableBody');
+    table.innerHTML = "<tr><td colspan='7'>جاري جلب البيانات...</td></tr>";
 
-        if (!record) {
-            stats.abs++;
-            body.innerHTML += `<tr class="row-absent"><td>${t.name}</td><td colspan="5">غائب / لم يحضر</td></tr>`;
-        } else {
-            if(record.checkOut) stats.out++;
+    // تصفير الإحصائيات
+    let s = { abs:0, lDays:0, lMins:0, eDays:0, eMins:0, noOut:0 };
 
-            // حساب التأخير
-            const late = record.checkIn ? diffMins(START_TIME, record.checkIn) : 0;
-            if(late > 0) { stats.lCount++; stats.lMins += late; }
+    try {
+        const teachersSnap = await db.ref('teachers').once('value');
+        const teachers = teachersSnap.val() || {};
+        let tableRows = "";
 
-            // حساب الخروج المبكر
-            const early = record.checkOut ? diffMins(record.checkOut, END_TIME) : 0;
-            if(early > 0) stats.eMins += early;
+        // حلقة تكرارية لكل يوم في النطاق
+        for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toLocaleDateString('en-GB').replace(/\//g, '-'); // تنسيق DD-MM-YYYY
+            const attSnap = await db.ref('attendance/' + dateStr).once('value');
+            const attData = attSnap.val() || {};
 
-            body.innerHTML += `
-                <tr>
-                    <td><strong>${t.name}</strong></td>
-                    <td>${record.checkIn || '--:--'}</td>
-                    <td>${record.checkOut || '--:--'}</td>
-                    <td style="color:${late > 0 ? '#f39c12' : 'black'}">${late}</td>
-                    <td style="color:${early > 0 ? '#e74c3c' : 'black'}">${early}</td>
-                    <td>${record.outDuringDay || 0}</td>
-                </tr>`;
+            Object.keys(teachers).forEach(id => {
+                const t = teachers[id];
+                const rec = attData[id] || null;
+
+                if (!rec) {
+                    s.abs++;
+                    tableRows += `<tr class="row-abs"><td>${t.name}</td><td>${dateStr}</td><td colspan="4">غائب</td><td>غياب</td></tr>`;
+                } else {
+                    const late = calculateDiff(WORK_START, rec.checkIn);
+                    const early = rec.checkOut ? calculateDiff(rec.checkOut, WORK_END) : 0;
+                    
+                    if (late > 0) { s.lDays++; s.lMins += late; }
+                    if (early > 0) { s.eDays++; s.eMins += early; }
+                    if (rec.checkIn && !rec.checkOut) s.noOut++;
+
+                    tableRows += `
+                        <tr>
+                            <td>${t.name}</td>
+                            <td>${dateStr}</td>
+                            <td>${rec.checkIn || '--'}</td>
+                            <td>${rec.checkOut || '--'}</td>
+                            <td>${late}</td>
+                            <td>${early}</td>
+                            <td>${rec.checkIn ? 'حاضر' : 'غائب'}</td>
+                        </tr>`;
+                }
+            });
         }
-    });
 
-    // تحديث الصناديق في الواجهة
-    document.getElementById('sTotal').innerText = stats.total;
-    document.getElementById('sAbs').innerText = stats.abs;
-    document.getElementById('sOut').innerText = stats.out;
-    document.getElementById('sLateCount').innerText = stats.lCount;
-    document.getElementById('sLateMins').innerText = stats.lMins;
-    document.getElementById('sEarlyMins').innerText = stats.eMins;
+        table.innerHTML = tableRows;
+        // تحديث واجهة الإحصائيات
+        document.getElementById('tAbs').innerText = s.abs;
+        document.getElementById('tLateDays').innerText = s.lDays;
+        document.getElementById('tLateMins').innerText = s.lMins;
+        document.getElementById('tEarlyDays').innerText = s.eDays;
+        document.getElementById('tEarlyMins').innerText = s.eMins;
+        document.getElementById('tNoOut').innerText = s.noOut;
+
+    } catch (e) { console.error(e); table.innerHTML = "<tr><td colspan='7'>خطأ في جلب البيانات</td></tr>"; }
 }
 
-function diffMins(t1, t2) {
-    if(!t1 || !t2) return 0;
-    const [h1, m1] = t1.split(':').map(Number);
-    const [h2, m2] = t2.split(':').map(Number);
+function calculateDiff(time1, time2) {
+    if (!time1 || !time2 || time2 === '--') return 0;
+    const [h1, m1] = time1.split(':').map(Number);
+    const [h2, m2] = time2.split(':').map(Number);
     const diff = (h2 * 60 + m2) - (h1 * 60 + m1);
     return diff > 0 ? diff : 0;
 }
 
-loadReport();
+// تشغيل التقرير لأول مرة عند الفتح
+fetchRangeReport();
