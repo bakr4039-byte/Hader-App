@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة روابط المعلمين - ثانوية الصحافة</title>
+    <title>إدارة الروابط والباركود - ثانوية الصحافة</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,39 +14,30 @@
 
     <style>
         :root { --primary: #1a237e; --accent: #3f51b5; --success: #27ae60; --bg: #f4f7f6; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 0; color: #333; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 0; }
         
         .header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .container { max-width: 900px; margin: -20px auto 50px; padding: 0 15px; }
 
-        /* صندوق إضافة معلم جديد */
-        .add-teacher-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .add-teacher-card h3 { margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        /* إضافة معلم جديد */
+        .add-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .input-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-family: 'Tajawal'; outline: none; min-width: 200px; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(26, 35, 126, 0.3); }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-family: 'Tajawal'; outline: none; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
-        /* قائمة الروابط */
-        .search-box { background: white; padding: 15px 20px; border-radius: 50px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
-        .search-box input { border: none; flex: 1; padding: 5px; }
-
+        /* قائمة المعلمين */
         .link-card { background: white; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); border-right: 5px solid var(--accent); }
-        .teacher-meta { display: flex; justify-content: space-between; align-items: center; }
-        .teacher-name { font-weight: bold; font-size: 18px; color: var(--primary); }
-        
         .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn-action { padding: 10px 15px; border: none; border-radius: 10px; cursor: pointer; font-family: 'Tajawal'; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.2s; text-decoration: none; }
+        .btn-action { padding: 10px 15px; border: none; border-radius: 10px; cursor: pointer; font-family: 'Tajawal'; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 8px; text-decoration: none; }
         .btn-copy { background: #e3f2fd; color: #1565c0; }
         .btn-wa { background: #e8f5e9; color: #2e7d32; }
         .btn-qr { background: #f3e5f5; color: #7b1fa2; }
-        .btn-open { background: #fff3e0; color: #e65100; }
 
-        /* نافذة الباركود المنبثقة */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; position: relative; }
-        #qrcode { margin: 20px auto; display: flex; justify-content: center; }
-        .close-modal { position: absolute; top: 15px; left: 15px; cursor: pointer; font-size: 20px; color: #999; }
+        /* النافذة المنبثقة للباركود */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; max-width: 350px; width: 90%; }
+        #qrcode { margin: 20px auto; display: flex; justify-content: center; padding: 10px; background: white; border-radius: 10px; }
+        .btn-download { background: var(--success); color: white; width: 100%; margin-top: 15px; justify-content: center; }
     </style>
 </head>
 <body>
@@ -56,25 +47,18 @@
             <a href="admin.html" style="color: white; text-decoration: none; font-size: 14px; opacity: 0.8; display: block; margin-bottom: 10px;">
                 <i class="fas fa-arrow-right"></i> العودة للوحة الإدارة
             </a>
-            <h1><i class="fas fa-id-card-clip"></i> مركز روابط المعلمين</h1>
+            <h1><i class="fas fa-qrcode"></i> روابط وباركود المعلمين</h1>
         </div>
     </header>
 
     <div class="container">
-        <div class="add-teacher-card">
-            <h3><i class="fas fa-user-plus"></i> إنشاء رابط معلم جديد</h3>
+        <div class="add-card">
+            <h3 style="margin:0; color:var(--primary);"><i class="fas fa-plus-circle"></i> إنشاء رابط معلم جديد</h3>
             <div class="input-group">
-                <input type="text" id="newName" placeholder="اسم المعلم المعتمد...">
+                <input type="text" id="newName" placeholder="اسم المعلم...">
                 <input type="text" id="newID" placeholder="رقم الهوية / المعرف...">
-                <button class="btn-main" onclick="createNewTeacher()">
-                    <i class="fas fa-magic"></i> إنشاء وحفظ
-                </button>
+                <button class="btn-main" onclick="addTeacher()"><i class="fas fa-save"></i> حفظ</button>
             </div>
-        </div>
-
-        <div class="search-box">
-            <i class="fas fa-search" style="color:#999"></i>
-            <input type="text" id="searchInp" placeholder="ابحث عن اسم المعلم..." onkeyup="filterTeachers()">
         </div>
 
         <div id="teachersList">
@@ -83,97 +67,79 @@
 
     <div id="qrModal" class="modal">
         <div class="modal-content">
-            <i class="fas fa-times close-modal" onclick="closeModal()"></i>
-            <h3 id="qrTitle">باركود المعلم</h3>
+            <h3 id="qrTitle" style="margin:0"></h3>
             <div id="qrcode"></div>
-            <p style="font-size:12px; color:#666;">يمكن للمعلم مسح الكود بجواله للتبصيم مباشرة</p>
-            <button class="btn-main" style="width:100%" onclick="closeModal()">إغلاق</button>
+            <p style="font-size:12px; color:#666;">يمكن مسح الكود بالجوال للتبصيم المباشر</p>
+            
+            <button class="btn-action btn-download" onclick="downloadQR()">
+                <i class="fas fa-download"></i> تحميل صورة الباركود
+            </button>
+            
+            <button class="btn-action" style="background:#eee; width:100%; margin-top:10px; justify-content:center;" onclick="closeModal()">إغلاق</button>
         </div>
     </div>
 
     <script>
         const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(config);
-        const db = firebase.database();
+        firebase.initializeApp(config); const db = firebase.database();
 
-        // 1. إنشاء معلم جديد
-        function createNewTeacher() {
-            const name = document.getElementById('newName').value;
-            const id = document.getElementById('newID').value;
-            if(!name || !id) return alert("يرجى إكمال البيانات أولاً");
-
-            db.ref('teachers/' + id).set({ name: name }).then(() => {
-                alert("✅ تم إنشاء المعلم وحفظ الرابط بنجاح");
-                document.getElementById('newName').value = "";
-                document.getElementById('newID').value = "";
-            });
+        function addTeacher() {
+            const n = document.getElementById('newName').value, i = document.getElementById('newID').value;
+            if(n && i) db.ref('teachers/' + i).set({ name: n }).then(() => { alert("تم الحفظ"); location.reload(); });
         }
 
-        // 2. مراقبة وعرض القائمة
         db.ref('teachers').on('value', snap => {
-            const list = snap.val() || {};
-            const container = document.getElementById('teachersList');
-            container.innerHTML = "";
-
+            const list = snap.val() || {}; const cont = document.getElementById('teachersList'); cont.innerHTML = "";
             Object.keys(list).forEach(id => {
                 const name = list[id].name;
                 const link = `https://bakr4039-byte.github.io/Hader-App/index.html?id=${id}`;
-
-                container.innerHTML += `
-                    <div class="link-card" data-name="${name}">
-                        <div class="teacher-meta">
-                            <span class="teacher-name"><i class="fas fa-user-circle"></i> ${name}</span>
-                            <small style="color:#999">ID: ${id}</small>
-                        </div>
+                cont.innerHTML += `
+                    <div class="link-card">
+                        <div style="font-weight:bold; font-size:18px; color:var(--primary);">${name}</div>
                         <div class="actions">
-                            <button class="btn-action btn-copy" onclick="copy('${link}')">
-                                <i class="fas fa-copy"></i> نسخ الرابط
-                            </button>
-                            <button class="btn-action btn-wa" onclick="sendWA('${link}', '${name}')">
-                                <i class="fab fa-whatsapp"></i> واتساب
-                            </button>
-                            <button class="btn-action btn-qr" onclick="showQR('${link}', '${name}')">
-                                <i class="fas fa-qrcode"></i> باركود
-                            </button>
-                            <a href="${link}" target="_blank" class="btn-action btn-open">
-                                <i class="fas fa-external-link-alt"></i> فتح
-                            </a>
+                            <button class="btn-action btn-copy" onclick="copy('${link}')"><i class="fas fa-copy"></i> نسخ</button>
+                            <button class="btn-action btn-wa" onclick="sendWA('${link}', '${name}')"><i class="fab fa-whatsapp"></i> واتساب</button>
+                            <button class="btn-action btn-qr" onclick="showQR('${link}', '${name}')"><i class="fas fa-qrcode"></i> باركود</button>
                         </div>
                     </div>
                 `;
             });
         });
 
-        // وظائف الأزرار
-        function copy(url) {
-            navigator.clipboard.writeText(url).then(() => alert("✅ تم نسخ الرابط"));
-        }
+        function copy(url) { navigator.clipboard.writeText(url).then(() => alert("✅ تم النسخ")); }
 
         function sendWA(url, name) {
-            const msg = encodeURIComponent(`مرحباً أ/ ${name}، هذا هو رابط البصمة الخاص بك لمجمع ثانوية الصحافة:\n${url}`);
+            const msg = encodeURIComponent(`مرحباً أ/ ${name}، هذا هو رابط البصمة الخاص بك:\n${url}`);
             window.open(`https://wa.me/?text=${msg}`, '_blank');
         }
 
-        let qr;
+        let currentName = "";
         function showQR(url, name) {
-            document.getElementById('qrTitle').innerText = `باركود: ${name}`;
+            currentName = name;
+            document.getElementById('qrTitle').innerText = name;
             document.getElementById('qrcode').innerHTML = "";
-            qr = new QRCode(document.getElementById("qrcode"), {
-                text: url,
-                width: 200,
-                height: 200
-            });
+            new QRCode(document.getElementById("qrcode"), { text: url, width: 200, height: 200 });
             document.getElementById('qrModal').style.display = 'flex';
         }
 
         function closeModal() { document.getElementById('qrModal').style.display = 'none'; }
 
-        function filterTeachers() {
-            const q = document.getElementById('searchInp').value.toLowerCase();
-            document.querySelectorAll('.link-card').forEach(card => {
-                const name = card.getAttribute('data-name').toLowerCase();
-                card.style.display = name.includes(q) ? 'flex' : 'none';
-            });
+        // --- وظيفة تحميل الباركود كصورة ---
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (canvas) {
+                const link = document.createElement('a');
+                link.download = `باركود_المعلم_${currentName}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            } else {
+                // في حالة كان المتصفح يستخدم <img> بدلاً من <canvas>
+                const img = document.querySelector('#qrcode img');
+                const link = document.createElement('a');
+                link.download = `باركود_المعلم_${currentName}.png`;
+                link.href = img.src;
+                link.click();
+            }
         }
     </script>
 </body>
