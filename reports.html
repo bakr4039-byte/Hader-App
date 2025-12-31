@@ -9,65 +9,74 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Tajawal', sans-serif; background: #f8fafc; margin: 0; }
-        .top-nav { background: #1a237e; padding: 10px 20px; }
+        body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; padding: 0; margin: 0; }
+        .top-nav { background: #1a237e; padding: 15px 20px; display: flex; align-items: center; }
+        .btn-back { color: white; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 8px; }
         .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
-        .filter-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
-        table { width: 100%; background: white; border-collapse: collapse; border-radius: 20px; overflow: hidden; }
-        th { background: #1e293b; color: white; padding: 15px; }
-        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .stat-card { background: white; padding: 20px; border-radius: 15px; text-align: center; border-bottom: 4px solid #3498db; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .stat-card h3 { font-size: 13px; color: #7f8c8d; margin: 0; }
+        .stat-card p { font-size: 28px; font-weight: bold; margin: 10px 0 0; }
+        .table-wrapper { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #34495e; color: white; padding: 15px; font-size: 13px; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+        .btn-ex { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-family: 'Tajawal'; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="top-nav"><a href="admin.html" style="color:white; text-decoration:none;"><i class="fas fa-arrow-right"></i> العودة للإدارة</a></div>
+    <div class="top-nav"><a href="admin.html" class="btn-back"><i class="fas fa-arrow-right"></i> العودة للوحة الإدارة</a></div>
     <div class="container">
-        <div class="filter-card">
-            <h2>تقرير الأداء التجميعي</h2>
-            من: <input type="date" id="dateF"> إلى: <input type="date" id="dateT">
-            <button class="btn" style="background:#3f51b5" onclick="loadR()">تحليل</button>
-            <button class="btn" style="background:#27ae60" onclick="exportEX()">تصدير Excel</button>
+        <h2 style="text-align:center;">ملخص تقارير الحضور</h2>
+        <div style="text-align:center; margin-bottom:20px;">
+            <input type="date" id="repDate" style="padding:10px; border-radius:10px; border:1px solid #ddd;">
+            <button onclick="loadRep()" style="padding:10px 20px; background:#3498db; color:white; border:none; border-radius:10px; cursor:pointer; margin-right:10px;">عرض</button>
+            <button onclick="exportEx()" class="btn-ex"><i class="fas fa-file-excel"></i> تصدير Excel</button>
         </div>
-        <table id="rTable">
-            <thead><tr><th>المعلم</th><th>الغياب</th><th>أيام التأخير</th><th>دقائق التأخير</th><th>خروج مبكر</th><th>بدون انصراف</th></tr></thead>
-            <tbody id="rBody"></tbody>
-        </table>
+        <div class="stats-grid">
+            <div class="stat-card"><h3>الغياب</h3><p id="sAbs">0</p></div>
+            <div class="stat-card"><h3>دقائق التأخير</h3><p id="sLat">0</p></div>
+            <div class="stat-card"><h3>خروج مبكر(د)</h3><p id="sEar">0</p></div>
+            <div class="stat-card"><h3>تم الانصراف</h3><p id="sOut">0</p></div>
+        </div>
+        <div class="table-wrapper">
+            <table id="repTable">
+                <thead><tr><th>المعلم</th><th>حضور</th><th>انصراف</th><th>تأخير(د)</th><th>مبكر(د)</th><th>خروج مؤقت(د)</th></tr></thead>
+                <tbody id="repBody"></tbody>
+            </table>
+        </div>
     </div>
     <script>
-        const conf = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(conf); const db = firebase.database();
-        let sIn = "07:00", sOut = "13:00";
-        db.ref('settings/official_times').on('value', s => { if(s.exists()){ sIn=s.val().start; sOut=s.val().end; }});
-
-        async function loadR() {
-            const start = new Date(document.getElementById('dateF').value), end = new Date(document.getElementById('dateT').value);
-            const tsS = await db.ref('teachers').once('value'); const ts = tsS.val();
-            let stats = {}; Object.keys(ts).forEach(id => stats[id] = { n:ts[id].name, a:0, ld:0, lm:0, em:0, no:0 });
-
-            for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) {
-                const dk = d.toLocaleDateString('en-GB').replace(/\//g, '-');
-                const adS = await db.ref('attendance/'+dk).once('value'); const ad = adS.val() || {};
-                Object.keys(stats).forEach(id => {
-                    const r = ad[id];
-                    if(!r) stats[id].a++;
-                    else {
-                        const l = diff(sIn, r.checkIn); if(l>0){ stats[id].ld++; stats[id].lm+=l; }
-                        const e = r.checkOut ? diff(r.checkOut, sOut) : 0; if(e>0) stats[id].em+=e;
-                        if(r.checkIn && !r.checkOut) stats[id].no++;
-                    }
-                });
-            }
-            const body = document.getElementById('rBody'); body.innerHTML = "";
-            Object.values(stats).forEach(s => {
-                body.innerHTML += `<tr><td>${s.n}</td><td style="color:red">${s.a}</td><td>${s.ld}</td><td>${s.lm}</td><td>${s.em}</td><td>${s.no}</td></tr>`;
+        const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(config); const db = firebase.database();
+        const START = "07:00", END = "13:00";
+        document.getElementById('repDate').valueAsDate = new Date();
+        async function loadRep() {
+            const date = document.getElementById('repDate').value.split('-').reverse().join('-');
+            const tsS = await db.ref('teachers').once('value'); const ts = tsS.val() || {};
+            const attS = await db.ref('attendance/'+date).once('value'); const att = attS.val() || {};
+            let a=0, l=0, e=0, c=0, h="";
+            Object.keys(ts).forEach(id => {
+                const r = att[id];
+                if(!r) { a++; h += `<tr style="color:red"><td>${ts[id].name}</td><td colspan="5">غائب</td></tr>`; }
+                else {
+                    if(r.checkOut) c++;
+                    const lat = diff(START, r.checkIn); l += lat;
+                    const ear = r.checkOut ? diff(r.checkOut, END) : 0; e += ear;
+                    h += `<tr><td>${ts[id].name}</td><td>${r.checkIn||'-'}</td><td>${r.checkOut||'-'}</td><td>${lat}</td><td>${ear}</td><td>${r.outDuringDay||0}</td></tr>`;
+                }
             });
+            document.getElementById('repBody').innerHTML = h;
+            document.getElementById('sAbs').innerText = a; document.getElementById('sLat').innerText = l;
+            document.getElementById('sEar').innerText = e; document.getElementById('sOut').innerText = c;
         }
         function diff(t1, t2) {
-            if(!t1 || !t2 || t2==='--') return 0;
+            if(!t1 || !t2 || t2==='-') return 0;
             const [h1, m1] = t1.split(':').map(Number); const [h2, m2] = t2.split(':').map(Number);
-            const d = (h2*60+m2)-(h1*60+m1); return d>0?d:0;
+            const d = (h2*60+m2)-(h1*60+m1); return d > 0 ? d : 0;
         }
-        function exportEX() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('rTable')), 'تقرير.xlsx'); }
+        function exportEx() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('repTable')), 'تقرير_الحضور.xlsx'); }
+        loadRep();
     </script>
 </body>
 </html>
