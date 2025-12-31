@@ -4,34 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>حاضر - ثانوية الصحافة</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; }
-        .logo { color: #3498db; font-size: 50px; margin-bottom: 10px; }
-        h2 { color: #2c3e50; margin-bottom: 5px; }
-        #statusMsg { color: #7f8c8d; font-size: 14px; margin-bottom: 20px; display: block; }
-        .btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; transition: 0.3s; }
+        body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; z-index: 100; margin-bottom: 15px; }
+        
+        /* تنسيق الخريطة */
+        #map { height: 250px; width: 100%; max-width: 400px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 2px solid white; }
+        
+        .logo { color: #3498db; font-size: 40px; margin-bottom: 5px; }
+        h2 { color: #2c3e50; margin: 5px 0; font-size: 22px; }
+        #statusMsg { color: #7f8c8d; font-size: 13px; margin-bottom: 15px; display: block; }
+        
+        .btn { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; transition: 0.3s; }
         .btn-in { background: #27ae60; }
         .btn-out { background: #e74c3c; }
         .btn-perm { background: #3498db; }
         .btn-perm.active { background: #e67e22; }
-        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; }
+        
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; }
     </style>
 </head>
 <body>
+
     <div id="loader" class="loading-overlay">
         <i class="fas fa-spinner fa-spin fa-3x" style="color:#3498db"></i>
-        <p>جاري التحقق من موقعك...</p>
+        <p>جاري تحديد موقعك الجغرافي...</p>
     </div>
+
+    <div id="map"></div>
 
     <div class="container">
         <div class="logo"><i class="fas fa-school"></i></div>
         <h2 id="teacherName">ثانوية الصحافة</h2>
-        <span id="statusMsg">يجب أن تكون داخل نطاق المدرسة للتسجيل (150 متر)</span>
+        <span id="statusMsg">النطاق المسموح: دائرة قطرها 150 متر</span>
         
         <button class="btn btn-in" onclick="checkLocationAndProcess('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
         
@@ -45,6 +60,7 @@
     </div>
 
     <script>
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
@@ -57,7 +73,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // إحداثيات المدرسة
+        // إحداثيات المدرسة (ثانوية الصحافة)
         const SCHOOL_LAT = 24.8055; 
         const SCHOOL_LNG = 46.6433;
 
@@ -69,6 +85,16 @@
         const todayKey = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
         let outStartTime = null;
 
+        // تهيئة الخريطة
+        let map = L.map('map').setView([SCHOOL_LAT, SCHOOL_LNG], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // إضافة علامة للمدرسة ودائرة النطاق (150 متر)
+        L.marker([SCHOOL_LAT, SCHOOL_LNG]).addTo(map).bindPopup('ثانوية الصحافة').openPopup();
+        L.circle([SCHOOL_LAT, SCHOOL_LNG], { radius: 150, color: '#3498db', fillOpacity: 0.1 }).addTo(map);
+
+        let userMarker;
+
         function checkLocationAndProcess(type) {
             document.getElementById('loader').style.display = 'flex';
             if (navigator.geolocation) {
@@ -78,19 +104,24 @@
                         const userLng = position.coords.longitude;
                         const dist = calculateDistance(userLat, userLng, SCHOOL_LAT, SCHOOL_LNG);
 
-                        if (dist <= 150) { // تم التعديل إلى 150 متر
+                        // تحديث موقع المعلم على الخريطة
+                        if (userMarker) map.removeLayer(userMarker);
+                        userMarker = L.circleMarker([userLat, userLng], { color: 'red', radius: 8 }).addTo(map).bindPopup('موقعك الحالي').openPopup();
+                        map.setView([userLat, userLng], 17);
+
+                        if (dist <= 150) {
                             executeAttendance(type);
                         } else {
                             document.getElementById('loader').style.display = 'none';
-                            alert(`عذراً، أنت خارج النطاق بمسافة ${Math.round(dist)} متر. الحد المسموح 150م.`);
+                            alert(`أنت خارج النطاق بمسافة ${Math.round(dist)} متر. يجب الاقتراب من المدرسة.`);
                         }
                     },
                     (error) => {
                         document.getElementById('loader').style.display = 'none';
-                        alert("يرجى تفعيل GPS لتتمكن من التسجيل.");
+                        alert("فشل تحديد الموقع. تأكد من تفعيل GPS.");
                     }
                 );
-            } else { alert("متصفحك لا يدعم تحديد الموقع."); }
+            } else { alert("متصفحك لا يدعم الخرائط."); }
         }
 
         function executeAttendance(type) {
@@ -102,7 +133,7 @@
                 inStatus: "حاضر"
             }).then(() => {
                 document.getElementById('loader').style.display = 'none';
-                alert(`✅ تم تسجيل ${type} بنجاح`);
+                alert(`✅ تم تسجيل ${type} بنجاح (${timeStr})`);
                 if(type === 'حضور') document.getElementById('permissionSection').style.display = 'block';
             });
         }
@@ -119,10 +150,10 @@
             const btn = document.getElementById('btnPermission');
             const now = new Date();
             if (!outStartTime) {
-                if(!confirm("تسجيل خروج مؤقت؟")) return;
+                if(!confirm("تسجيل استئذان مؤقت؟")) return;
                 outStartTime = now;
                 btn.classList.add('active');
-                btn.innerHTML = '<i class="fas fa-undo"></i> عودة للعمل';
+                btn.innerHTML = '<i class="fas fa-undo"></i> إنهاء الاستئذان (عودة)';
             } else {
                 const diffMins = Math.round((now - outStartTime) / 60000);
                 database.ref(`attendance/${todayKey}/${tId}`).once('value').then(snap => {
@@ -130,7 +161,7 @@
                     database.ref(`attendance/${todayKey}/${tId}`).update({
                         outDuringDay: currentOut + diffMins
                     }).then(() => {
-                        alert(`تمت العودة. مدة الخروج: ${diffMins} دقيقة`);
+                        alert(`تمت العودة للعمل. المدة: ${diffMins} دقيقة`);
                         outStartTime = null;
                         btn.classList.remove('active');
                         btn.innerHTML = '<i class="fas fa-walking"></i> خروج مؤقت / استئذان';
