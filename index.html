@@ -20,26 +20,26 @@
         .out-range { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
         .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         #map { height: 200px; width: 100%; border-radius: 20px; margin-bottom: 10px; border: 3px solid white; }
-        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; }
         .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; }
         .btn-admin { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 12px; z-index: 2000; }
     </style>
 </head>
 <body>
-    <a href="admin.html" class="btn-admin"><i class="fas fa-user-shield"></i> الإدارة</a>
+    <a href="admin.html" class="btn-admin"><i class="fas fa-user-shield"></i> لوحة الإدارة</a>
     <div class="header-info" id="topBar" style="display:none;">
         <span style="font-size:18px; font-weight:bold; color:#3498db;" id="liveDay">---</span><br>
         <small id="liveTime">00:00:00</small> | <small id="liveDate">--/--/----</small>
     </div>
     <div class="work-hours" id="workHours" style="display:none;">
-        <div><i class="fas fa-sign-in-alt"></i> الحضور: <span id="schIn">--:--</span></div>
+        <div><i class="fas fa-clock"></i> الحضور: <span id="schIn">--:--</span></div>
         <div><i class="fas fa-sign-out-alt"></i> الانصراف: <span id="schOut">--:--</span></div>
     </div>
     <div id="rangeStatus" class="range-badge out-range" style="display:none;">جاري تحديد الموقع...</div>
     <div id="App" style="display: none; width: 100%; max-width: 400px;">
         <div id="map"></div>
         <div class="container">
-            <h2 id="TN">ثانوية الصحافة</h2>
+            <h2 id="TN" style="margin-top:0; color:#2c3e50;">ثانوية الصحافة</h2>
             <button class="btn btn-in" onclick="H('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
             <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
@@ -71,7 +71,7 @@
                     document.getElementById('rangeStatus').style.display = 'block';
                     document.getElementById('TN').innerText = "مرحباً: " + s.val().name;
                     initM(); startWatching();
-                }
+                } else { document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>الرابط غير مفعّل</h2>"; }
             });
         }
 
@@ -87,7 +87,7 @@
                 const d = getD(p.coords.latitude, p.coords.longitude, SLAT, SLNG);
                 const stat = document.getElementById('rangeStatus');
                 if (UM) M.removeLayer(UM); UM = L.circleMarker([p.coords.latitude, p.coords.longitude], {color:'red', radius:8}).addTo(M);
-                if (d <= DIST) { stat.innerText = "داخل النطاق ✅"; stat.className = "range-badge in-range"; }
+                if (d <= DIST) { stat.innerText = "داخل نطاق المدرسة ✅"; stat.className = "range-badge in-range"; }
                 else { stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; stat.className = "range-badge out-range"; }
             }, null, { enableHighAccuracy: true });
         }
@@ -99,8 +99,8 @@
                     const now = new Date(); const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
                     const dk = now.toLocaleDateString('en-GB').replace(/\//g, '-');
                     db.ref(`attendance/${dk}/${ID}`).update({ name: document.getElementById('TN').innerText.replace('مرحباً: ', ''), [t === 'حضور' ? 'checkIn' : 'checkOut']: time, inStatus: "حاضر" })
-                    .then(() => alert(`تم تسجيل ${t}`));
-                } else alert("خارج النطاق!");
+                    .then(() => alert(`تم تسجيل ${t} بنجاح`));
+                } else alert("عذراً، أنت خارج نطاق المدرسة!");
             });
         }
 

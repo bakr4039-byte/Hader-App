@@ -10,31 +10,41 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; margin: 0; }
-        .header { background: #1a237e; color: white; padding: 25px; text-align: center; }
-        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
-        .card { background: white; padding: 20px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; border-right: 5px solid #3f51b5; }
-        .btn { padding: 8px 15px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; font-family: 'Tajawal'; font-size: 13px; display: flex; align-items: center; gap: 5px; }
+        .header { background: #1a237e; color: white; padding: 30px; text-align: center; border-radius: 0 0 30px 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 800px; margin: -20px auto 50px; padding: 0 15px; }
+        .card { background: white; padding: 22px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; border-right: 6px solid #3f51b5; transition: 0.3s; }
+        .card:hover { transform: scale(1.01); }
+        .btn { padding: 9px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; font-family: 'Tajawal'; font-size: 13px; display: flex; align-items: center; gap: 6px; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; max-width: 320px; width: 90%; }
+        #qrcode { display: flex; justify-content: center; margin: 15px 0; padding: 10px; background: #fff; border-radius: 10px; }
     </style>
 </head>
 <body>
-    <div class="header"><a href="admin.html" style="color:white; float:right; text-decoration:none;"><i class="fas fa-arrow-right"></i> العودة</a><h1>روابط بصمة المعلمين</h1></div>
+    <div class="header">
+        <a href="admin.html" style="color:white; float:right; text-decoration:none; font-size:14px; opacity:0.8;"><i class="fas fa-arrow-right"></i> العودة</a>
+        <h1><i class="fas fa-share-nodes"></i> روابط بصمة المعلمين</h1>
+    </div>
     <div class="container">
         <div class="card" style="flex-direction:column; align-items:stretch;">
-            <h3 style="margin:0 0 10px; color:#1a237e;">إضافة معلم جديد</h3>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="nN" placeholder="اسم المعلم" style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd;">
-                <input type="text" id="nI" placeholder="رقم الهوية" style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd;">
-                <button class="btn" style="background:#1a237e; color:white;" onclick="addT()">إضافة</button>
+            <h3 style="margin:0 0 15px; color:#1a237e;"><i class="fas fa-user-plus"></i> إضافة معلم جديد وإنشاء الرابط</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <input type="text" id="nN" placeholder="اسم المعلم المعتمد" style="flex:1; padding:11px; border-radius:10px; border:1px solid #ddd; font-family:'Tajawal'; min-width:200px;">
+                <input type="text" id="nI" placeholder="رقم الهوية" style="flex:1; padding:11px; border-radius:10px; border:1px solid #ddd; font-family:'Tajawal'; min-width:150px;">
+                <button class="btn" style="background:#1a237e; color:white;" onclick="addT()"><i class="fas fa-magic"></i> إضافة وحفظ</button>
             </div>
+        </div>
+        <div style="background:white; padding:12px 20px; border-radius:50px; margin-bottom:20px; display:flex; align-items:center; gap:10px; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+            <i class="fas fa-search" style="color:#999"></i>
+            <input type="text" id="srch" placeholder="بحث عن معلم..." style="border:none; outline:none; flex:1; font-family:'Tajawal';" onkeyup="fltr()">
         </div>
         <div id="lList"></div>
     </div>
     <div id="qModal" class="modal">
         <div class="modal-content">
-            <h3 id="qT" style="margin-top:0"></h3><div id="qrcode" style="display:flex; justify-content:center;"></div>
-            <button class="btn" style="background:#27ae60; color:white; width:100%; margin-top:15px; justify-content:center;" onclick="downQ()">تحميل الباركود</button>
+            <h3 id="qT" style="margin:0; color:#1a237e;"></h3>
+            <div id="qrcode"></div>
+            <button class="btn" style="background:#27ae60; color:white; width:100%; margin-top:10px; justify-content:center;" onclick="downQ()"><i class="fas fa-download"></i> تحميل الباركود</button>
             <button class="btn" style="width:100%; margin-top:10px; justify-content:center; background:#eee;" onclick="document.getElementById('qModal').style.display='none'">إغلاق</button>
         </div>
     </div>
@@ -46,15 +56,25 @@
             const ts = s.val() || {}; const cont = document.getElementById('lList'); cont.innerHTML = "";
             Object.keys(ts).forEach(id => {
                 const url = `https://bakr4039-byte.github.io/Hader-App/index.html?id=${id}`;
-                cont.innerHTML += `<div class="card"><strong>${ts[id].name}</strong><div style="display:flex; gap:5px;">
-                    <button class="btn" style="background:#e3f2fd; color:#1565c0;" onclick="navigator.clipboard.writeText('${url}'); alert('تم النسخ')"><i class="fas fa-copy"></i></button>
-                    <button class="btn" style="background:#e8f5e9; color:#2e7d32;" onclick="window.open('https://wa.me/?text='+encodeURIComponent('رابط بصمتك: '+url))"><i class="fab fa-whatsapp"></i></button>
-                    <button class="btn" style="background:#f3e5f5; color:#7b1fa2;" onclick="showQ('${url}', '${ts[id].name}')"><i class="fas fa-qrcode"></i></button></div></div>`;
+                cont.innerHTML += `<div class="card" data-name="${ts[id].name}">
+                    <span style="font-weight:bold; color:#2c3e50;"><i class="fas fa-user-circle"></i> ${ts[id].name}</span>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn" style="background:#e3f2fd; color:#1565c0;" onclick="navigator.clipboard.writeText('${url}'); alert('✅ تم النسخ')"><i class="fas fa-copy"></i> نسخ</button>
+                        <button class="btn" style="background:#e8f5e9; color:#2e7d32;" onclick="window.open('https://wa.me/?text='+encodeURIComponent('رابط البصمة الخاص بك: '+url))"><i class="fab fa-whatsapp"></i> واتساب</button>
+                        <button class="btn" style="background:#f3e5f5; color:#7b1fa2;" onclick="showQ('${url}', '${ts[id].name}')"><i class="fas fa-qrcode"></i> باركود</button>
+                    </div>
+                </div>`;
             });
         });
         let curN = "";
         function showQ(u, n) { curN=n; document.getElementById('qT').innerText=n; document.getElementById('qrcode').innerHTML=""; new QRCode(document.getElementById("qrcode"), {text:u, width:200, height:200}); document.getElementById('qModal').style.display='flex'; }
-        function downQ() { const c=document.querySelector('#qrcode canvas'); const l=document.createElement('a'); l.download=`باركود_${curN}.png`; l.href=c.toDataURL(); l.click(); }
+        function downQ() { const c=document.querySelector('#qrcode canvas'); const l=document.createElement('a'); l.download=`باركود_المعلم_${curN}.png`; l.href=c.toDataURL(); l.click(); }
+        function fltr() { 
+            const q = document.getElementById('srch').value.toLowerCase();
+            document.querySelectorAll('.card[data-name]').forEach(c => {
+                c.style.display = c.getAttribute('data-name').toLowerCase().includes(q) ? 'flex' : 'none';
+            });
+        }
     </script>
 </body>
 </html>

@@ -2,38 +2,40 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تقارير الأداء - ثانوية الصحافة</title>
+    <title>تقارير ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #3f51b5; --bg: #f8fafc; }
+        :root { --primary: #3f51b5; --accent: #1a237e; --bg: #f8fafc; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; }
-        .top-nav { background: #1a237e; padding: 12px 20px; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        .top-nav { background: var(--accent); padding: 12px 20px; display: flex; align-items: center; }
+        .btn-back { color: white; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 8px; opacity: 0.9; }
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
         .filter-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 25px; }
         .input-group { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 15px; }
         input[type="date"], select { padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-family: 'Tajawal'; }
-        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; }
+        .btn { padding: 11px 25px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; }
         .table-wrapper { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
         th { background: #1e293b; color: white; padding: 15px; font-size: 13px; }
         td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 500; }
+        tr:hover { background-color: #f9fbff; }
     </style>
 </head>
 <body>
-    <div class="top-nav"><a href="admin.html" style="color:white; text-decoration:none;"><i class="fas fa-arrow-right"></i> العودة للوحة الإدارة</a></div>
+    <div class="top-nav"><a href="admin.html" class="btn-back"><i class="fas fa-arrow-right"></i> العودة للوحة الإدارة</a></div>
     <div class="container">
         <div class="filter-card">
-            <h2 style="margin:0;"><i class="fas fa-chart-line"></i> تقرير إحصائيات المعلمين التفصيلي</h2>
+            <h2 style="margin:0;"><i class="fas fa-file-invoice"></i> تقرير الأداء التجميعي للمعلمين</h2>
             <div class="input-group">
                 المعلم: <select id="tSel"><option value="all">جميع المعلمين</option></select>
                 من: <input type="date" id="dateF">
                 إلى: <input type="date" id="dateT">
-                <button class="btn" style="background:var(--primary)" onclick="loadR()">تحليل البيانات</button>
-                <button class="btn" style="background:#27ae60" onclick="exportEX()">تصدير Excel</button>
+                <button class="btn" style="background:var(--primary)" onclick="loadR()"><i class="fas fa-sync"></i> تحليل</button>
+                <button class="btn" style="background:#27ae60" onclick="exportEX()"><i class="fas fa-file-excel"></i> تصدير Excel</button>
             </div>
         </div>
         <div class="table-wrapper">
@@ -44,11 +46,11 @@
                         <th style="background:#fff1f2; color:#be123c;">إجمالي الغياب</th>
                         <th style="background:#fffbeb; color:#b45309;">أيام التأخير</th>
                         <th style="background:#fffbeb; color:#b45309;">دقائق التأخير</th>
-                        <th style="background:#f5f3ff; color:#6d28d9;">خروج مبكر (د)</th>
-                        <th>عدم انصراف</th>
+                        <th style="background:#f5f3ff; color:#6d28d9;">دقائق الخروج المبكر</th>
+                        <th style="background:#f8fafc; color:#334155;">بدون انصراف</th>
                     </tr>
                 </thead>
-                <tbody id="rBody"><tr><td colspan="6">حدد الفترة واضغط تحليل</td></tr></tbody>
+                <tbody id="rBody"><tr><td colspan="6">الرجاء اختيار التواريخ والضغط على تحليل</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -65,7 +67,7 @@
         });
         async function loadR() {
             const start = new Date(document.getElementById('dateF').value), end = new Date(document.getElementById('dateT').value), selId = document.getElementById('tSel').value;
-            if(isNaN(start) || isNaN(end)) return alert("اختر التاريخ");
+            if(isNaN(start) || isNaN(end)) return alert("يرجى اختيار تاريخ صحيح");
             const tsS = await db.ref('teachers').once('value'); const ts = tsS.val();
             let stats = {}; Object.keys(ts).forEach(id => { if(selId==='all'||selId===id) stats[id] = { n:ts[id].name, a:0, ld:0, lm:0, em:0, no:0 }; });
 
@@ -92,7 +94,7 @@
             const [h1, m1] = t1.split(':').map(Number); const [h2, m2] = t2.split(':').map(Number);
             const d = (h2*60+m2)-(h1*60+m1); return d>0?d:0;
         }
-        function exportEX() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('rTable')), 'تقرير_الغياب_والتأخير.xlsx'); }
+        function exportEX() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('rTable')), 'تقرير_اداء_ثانوية_الصحافة.xlsx'); }
     </script>
 </body>
 </html>

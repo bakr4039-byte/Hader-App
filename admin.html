@@ -2,88 +2,113 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة إدارة ثانوية الصحافة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاضر - ثانوية الصحافة</title>
+    <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --primary: #3f51b5; --bg: #f4f7f6; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; }
-        .header { background: linear-gradient(135deg, #1a237e, var(--primary)); color: white; padding: 35px 20px; text-align: center; border-radius: 0 0 40px 40px; }
-        .container { max-width: 1100px; margin: -25px auto 50px; padding: 0 20px; }
-        .action-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
-        .btn { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; gap: 8px; text-decoration: none; font-family: 'Tajawal'; font-size: 14px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .stat-card .val { display: block; font-size: 32px; font-weight: bold; color: var(--primary); }
-        .table-card { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; padding: 15px; color: #7f8c8d; font-size: 13px; }
-        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f1f1; }
-        .badge { padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: bold; }
-        .present { background: #e8f5e9; color: #2e7d32; } .absent { background: #ffebee; color: #c62828; }
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
-        .modal-content { background:white; padding:30px; border-radius:20px; width:350px; text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .work-hours { background: #fff; width: 100%; max-width: 400px; padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-around; border: 1px solid #e0e0e0; font-size: 13px; }
+        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; font-size: 14px; }
+        .in-range { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
+        .out-range { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
+        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        #map { height: 200px; width: 100%; border-radius: 20px; margin-bottom: 10px; border: 3px solid white; }
+        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; }
+        .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; }
+        .btn-admin { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 12px; z-index: 2000; }
     </style>
 </head>
 <body>
-    <div class="header"><h1>لوحة إدارة ثانوية الصحافة</h1><div id="clock"></div></div>
-    <div class="container">
-        <div class="action-bar">
-            <a href="links.html" class="btn" style="background:#34495e"><i class="fas fa-link"></i> الروابط</a>
-            <a href="reports.html" class="btn" style="background:#8e44ad"><i class="fas fa-file-invoice"></i> التقارير</a>
-            <button class="btn" style="background:#607d8b" onclick="toggleM(true)"><i class="fas fa-cog"></i> الإعدادات</button>
-            <button class="btn" style="background:#e67e22" onclick="location.reload()"><i class="fas fa-sync"></i> تحديث</button>
-        </div>
-        <div class="stats-grid">
-            <div class="stat-card">إجمالي المعلمين <span class="val" id="totalT">0</span></div>
-            <div class="stat-card">حاضرون الآن <span class="val" id="presentT" style="color:#2ecc71">0</span></div>
-            <div class="stat-card">غائبون <span class="val" id="absentT" style="color:#e74c3c">0</span></div>
-        </div>
-        <div class="table-card">
-            <table>
-                <thead><tr><th>المعلم</th><th>حضور</th><th>انصراف</th><th>الحالة</th></tr></thead>
-                <tbody id="adminBody"></tbody>
-            </table>
-        </div>
+    <a href="admin.html" class="btn-admin"><i class="fas fa-user-shield"></i> لوحة الإدارة</a>
+    <div class="header-info" id="topBar" style="display:none;">
+        <span style="font-size:18px; font-weight:bold; color:#3498db;" id="liveDay">---</span><br>
+        <small id="liveTime">00:00:00</small> | <small id="liveDate">--/--/----</small>
     </div>
-    <div id="setModal" class="modal">
-        <div class="modal-content">
-            <h3>إعدادات مواعيد الدوام</h3>
-            <div style="text-align:right; margin-bottom:15px;">
-                الحضور: <input type="time" id="setIn" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
-                الانصراف: <input type="time" id="setOut" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
-            </div>
-            <button class="btn" style="background:var(--primary); width:100%; justify-content:center;" onclick="saveSet()">حفظ الإعدادات</button>
-            <button onclick="toggleM(false)" style="margin-top:10px; border:none; background:none; color:#999; cursor:pointer;">إلغاء</button>
+    <div class="work-hours" id="workHours" style="display:none;">
+        <div><i class="fas fa-clock"></i> الحضور: <span id="schIn">--:--</span></div>
+        <div><i class="fas fa-sign-out-alt"></i> الانصراف: <span id="schOut">--:--</span></div>
+    </div>
+    <div id="rangeStatus" class="range-badge out-range" style="display:none;">جاري تحديد الموقع...</div>
+    <div id="App" style="display: none; width: 100%; max-width: 400px;">
+        <div id="map"></div>
+        <div class="container">
+            <h2 id="TN" style="margin-top:0; color:#2c3e50;">ثانوية الصحافة</h2>
+            <button class="btn btn-in" onclick="H('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
+            <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
     </div>
     <script>
-        const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(config); const db = firebase.database();
-        function toggleM(s) { document.getElementById('setModal').style.display = s?'flex':'none'; }
-        function saveSet() {
-            const start = document.getElementById('setIn').value, end = document.getElementById('setOut').value;
-            if(!start || !end) return alert("أكمل البيانات");
-            db.ref('settings/official_times').set({ start, end }).then(() => { alert("تم الحفظ"); toggleM(false); });
+        const conf = { apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw", databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(conf); const db = firebase.database();
+        const SLAT = 24.8001897, SLNG = 46.6449937, DIST = 150;
+        const ID = new URLSearchParams(window.location.search).get('id');
+
+        function updateClock() {
+            const now = new Date(); const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            document.getElementById('liveDay').innerText = "يوم " + days[now.getDay()];
+            document.getElementById('liveTime').innerText = now.toLocaleTimeString('en-GB');
+            document.getElementById('liveDate').innerText = now.toLocaleDateString('en-GB');
         }
-        db.ref('settings/official_times').once('value', s => { if(s.exists()){ document.getElementById('setIn').value=s.val().start; document.getElementById('setOut').value=s.val().end; }});
-        setInterval(() => { const now = new Date(); document.getElementById('clock').innerText = now.toLocaleDateString('ar-SA') + " | " + now.toLocaleTimeString('ar-SA'); }, 1000);
-        const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-        db.ref('teachers').on('value', sT => {
-            const ts = sT.val() || {}; db.ref('attendance/' + today).on('value', sA => {
-                const att = sA.val() || {}; const body = document.getElementById('adminBody'); body.innerHTML = "";
-                let p = 0; Object.keys(ts).forEach(id => {
-                    const r = att[id] || {}; let st = r.inStatus === "حاضر" ? '<span class="badge present">حاضر</span>' : '<span class="badge absent">غائب</span>';
-                    if(r.inStatus === "حاضر") p++;
-                    body.innerHTML += `<tr><td>${ts[id].name}</td><td>${r.checkIn || '--'}</td><td>${r.checkOut || '--'}</td><td>${st}</td></tr>`;
-                });
-                document.getElementById('totalT').innerText = Object.keys(ts).length;
-                document.getElementById('presentT').innerText = p;
-                document.getElementById('absentT').innerText = Object.keys(ts).length - p;
-            });
+        setInterval(updateClock, 1000);
+
+        db.ref('settings/official_times').on('value', s => {
+            if(s.exists()){ document.getElementById('schIn').innerText = s.val().start; document.getElementById('schOut').innerText = s.val().end; }
         });
+
+        if (ID) {
+            db.ref('teachers/' + ID).once('value').then(s => {
+                if (s.exists()) {
+                    document.getElementById('App').style.display = 'block';
+                    document.getElementById('topBar').style.display = 'block';
+                    document.getElementById('workHours').style.display = 'flex';
+                    document.getElementById('rangeStatus').style.display = 'block';
+                    document.getElementById('TN').innerText = "مرحباً: " + s.val().name;
+                    initM(); startWatching();
+                } else { document.body.innerHTML = "<h2 style='text-align:center; margin-top:50px;'>الرابط غير مفعّل</h2>"; }
+            });
+        }
+
+        let M, UM;
+        function initM() {
+            M = L.map('map').setView([SLAT, SLNG], 17);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(M);
+            L.circle([SLAT, SLNG], { radius: DIST, color: '#3498db', fillOpacity: 0.1 }).addTo(M);
+        }
+
+        function startWatching() {
+            navigator.geolocation.watchPosition(p => {
+                const d = getD(p.coords.latitude, p.coords.longitude, SLAT, SLNG);
+                const stat = document.getElementById('rangeStatus');
+                if (UM) M.removeLayer(UM); UM = L.circleMarker([p.coords.latitude, p.coords.longitude], {color:'red', radius:8}).addTo(M);
+                if (d <= DIST) { stat.innerText = "داخل نطاق المدرسة ✅"; stat.className = "range-badge in-range"; }
+                else { stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; stat.className = "range-badge out-range"; }
+            }, null, { enableHighAccuracy: true });
+        }
+
+        function H(t) {
+            navigator.geolocation.getCurrentPosition(p => {
+                const d = getD(p.coords.latitude, p.coords.longitude, SLAT, SLNG);
+                if (d <= DIST) {
+                    const now = new Date(); const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+                    const dk = now.toLocaleDateString('en-GB').replace(/\//g, '-');
+                    db.ref(`attendance/${dk}/${ID}`).update({ name: document.getElementById('TN').innerText.replace('مرحباً: ', ''), [t === 'حضور' ? 'checkIn' : 'checkOut']: time, inStatus: "حاضر" })
+                    .then(() => alert(`تم تسجيل ${t} بنجاح`));
+                } else alert("عذراً، أنت خارج نطاق المدرسة!");
+            });
+        }
+
+        function getD(la1, lo1, la2, lo2) {
+            const R = 6371e3; const dLa = (la2-la1)*Math.PI/180; const dLo = (lo2-lo1)*Math.PI/180;
+            const a = Math.sin(dLa/2)**2 + Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
     </script>
 </body>
 </html>
