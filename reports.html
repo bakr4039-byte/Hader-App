@@ -4,51 +4,42 @@
     <meta charset="UTF-8">
     <title>تقارير ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f4f7f6; padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 1200px; margin: auto; }
-        .controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; background: #f9f9f9; padding: 20px; border-radius: 10px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #34495e; color: white; padding: 10px; font-size: 13px; }
-        td { padding: 10px; border: 1px solid #eee; text-align: center; }
-        .btn-print { background: #27ae60; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; display: block; margin: 20px auto; }
+        .card { background: white; padding: 25px; border-radius: 15px; max-width: 1000px; margin: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .header { text-align: center; color: #8e44ad; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
+        th { background: #34495e; color: white; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1 style="text-align:center; color:#8e44ad;"><i class="fas fa-chart-pie"></i> التقرير الإحصائي العام</h1>
-        <div class="controls">
+        <h1 class="header">التقرير الإحصائي العام</h1>
+        <div style="text-align:center; background:#f9f9f9; padding:15px; border-radius:10px;">
             من: <input type="date" id="s"> إلى: <input type="date" id="e">
-            <button onclick="calc()" style="background:#8e44ad; color:white; border:none; padding:8px 20px; border-radius:5px; cursor:pointer;">تحليل</button>
+            <button onclick="calc()" style="padding:8px 25px; cursor:pointer; background:#8e44ad; color:white; border:none; border-radius:5px;">تحليل البيانات</button>
         </div>
         <table>
             <thead>
                 <tr>
                     <th>المعلم</th>
-                    <th>حضور</th>
-                    <th>غياب</th>
-                    <th>مرات التأخر</th>
-                    <th>دقائق التأخر</th>
-                    <th>مرات الخروج</th>
-                    <th>دقائق الخروج</th>
+                    <th>أيام الحضور</th>
+                    <th>أيام الغياب</th>
+                    <th>إجمالي دقائق الخروج المؤقت</th>
                 </tr>
             </thead>
             <tbody id="res"></tbody>
         </table>
-        <button class="btn-print" onclick="window.print()">طباعة</button>
     </div>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw",
             authDomain: "hader-system.firebaseapp.com",
             databaseURL: "https://hader-system-default-rtdb.firebaseio.com/", 
             projectId: "hader-system",
-            storageBucket: "hader-system.firebasestorage.app",
-            messagingSenderId: "1039709774940",
             appId: "1:1039709774940:web:078351fe5cb90593473299"
         };
         firebase.initializeApp(firebaseConfig);
@@ -66,26 +57,15 @@
                     if(d >= start && d <= end) {
                         for(let id in all[date]) {
                             const r = all[date][id];
-                            if(!stats[id]) stats[id] = { name: r.name, p:0, a:0, lt:0, lm:0, ot:0, om:0 };
+                            if(!stats[id]) stats[id] = { name: r.name, p:0, a:0, om:0 };
                             if(r.inStatus === "غائب") stats[id].a++;
-                            else {
-                                stats[id].p++;
-                                if(r.lateMins > 0) { stats[id].lt++; stats[id].lm += Number(r.lateMins); }
-                                if(r.outDuringDay > 0) { stats[id].ot++; stats[id].om += Number(r.outDuringDay); }
-                            }
+                            else { stats[id].p++; stats[id].om += Number(r.outDuringDay || 0); }
                         }
                     }
                 }
-                const res = document.getElementById('res');
-                res.innerHTML = Object.keys(stats).map(id => `<tr>
-                    <td>${stats[id].name}</td>
-                    <td>${stats[id].p}</td>
-                    <td>${stats[id].a}</td>
-                    <td>${stats[id].lt}</td>
-                    <td style="color:red">${stats[id].lm}</td>
-                    <td>${stats[id].ot}</td>
-                    <td style="color:#e67e22">${stats[id].om}</td>
-                </tr>`).join('');
+                document.getElementById('res').innerHTML = Object.keys(stats).map(id => `
+                    <tr><td>${stats[id].name}</td><td>${stats[id].p}</td><td>${stats[id].a}</td><td>${stats[id].om}</td></tr>
+                `).join('');
             });
         }
     </script>
