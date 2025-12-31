@@ -2,128 +2,74 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - ثانوية الصحافة</title>
+    <title>إدارة ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --primary: #3f51b5; --secondary: #5c6bc0; --bg: #f4f7f6; }
+        :root { --primary: #3f51b5; --bg: #f4f7f6; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; }
-        .header { background: linear-gradient(135deg, #1a237e, var(--primary)); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 40px 40px; }
-        .container { max-width: 1100px; margin: -20px auto 50px; padding: 0 20px; }
-        .action-bar { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
-        
-        .btn { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-family: 'Tajawal'; transition: 0.3s; color: white; display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 14px; }
-        .btn-links { background: #34495e; } 
-        .btn-reports { background: #8e44ad; } 
-        .btn-settings { background: #607d8b; } /* لون زر الإعدادات */
-        
-        /* تصميم النافذة المنبثقة (Settings Modal) */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; text-align: center; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        .modal-content h3 { margin-top: 0; color: var(--primary); }
-        .setting-row { margin-bottom: 15px; text-align: right; }
-        .setting-row label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; }
-        .setting-row input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Tajawal'; box-sizing: border-box; }
-        .close-btn { position: absolute; top: 15px; left: 15px; cursor: pointer; color: #999; }
-
+        .header { background: linear-gradient(135deg, #1a237e, var(--primary)); color: white; padding: 30px; text-align: center; border-radius: 0 0 40px 40px; }
+        .container { max-width: 1100px; margin: -20px auto; padding: 0 20px; }
+        .action-bar { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; gap: 8px; font-family: 'Tajawal'; text-decoration: none; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .stat-card .val { display: block; font-size: 28px; font-weight: bold; color: var(--primary); }
-        
-        table { width: 100%; background: white; border-collapse: collapse; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        th { background: #f8f9fa; padding: 15px; color: #7f8c8d; font-size: 13px; }
+        table { width: 100%; background: white; border-collapse: collapse; border-radius: 20px; overflow: hidden; }
+        th { background: #f8f9fa; padding: 15px; color: #7f8c8d; }
         td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f1f1; }
-        .badge { padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: bold; }
-        .present { background: #e8f5e9; color: #2e7d32; } .absent { background: #ffebee; color: #c62828; }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
+        .modal-content { background:white; padding:30px; border-radius:20px; width:350px; text-align:center; }
     </style>
 </head>
 <body>
-
     <div class="header">
         <h1>لوحة إدارة ثانوية الصحافة</h1>
-        <div id="clock" style="font-size: 13px; opacity: 0.8; margin-top: 5px;"></div>
+        <div id="clock"></div>
     </div>
-
     <div class="container">
         <div class="action-bar">
-            <a href="links.html" class="btn btn-links"><i class="fas fa-link"></i> الروابط</a>
-            <a href="reports.html" class="btn btn-reports"><i class="fas fa-file-invoice"></i> التقارير</a>
-            <button class="btn btn-settings" onclick="toggleModal(true)"><i class="fas fa-cog"></i> الإعدادات</button>
+            <a href="links.html" class="btn" style="background:#34495e"><i class="fas fa-link"></i> الروابط</a>
+            <a href="reports.html" class="btn" style="background:#8e44ad"><i class="fas fa-file-invoice"></i> التقارير</a>
+            <button class="btn" style="background:#607d8b" onclick="toggleM(true)"><i class="fas fa-cog"></i> الإعدادات</button>
             <button class="btn" style="background:#e67e22" onclick="location.reload()"><i class="fas fa-sync"></i> تحديث</button>
         </div>
-
         <div class="stats-grid">
-            <div class="stat-card">إجمالي المعلمين <span class="val" id="totalT">0</span></div>
-            <div class="stat-card">حاضرون الآن <span class="val" id="presentT" style="color:#2ecc71">0</span></div>
-            <div class="stat-card">غائبون <span class="val" id="absentT" style="color:#e74c3c">0</span></div>
+            <div class="stat-card">المعلمين <span id="totalT" style="font-size:24px; font-weight:bold; display:block;">0</span></div>
+            <div class="stat-card">حاضرون <span id="presentT" style="color:#2ecc71; font-size:24px; font-weight:bold; display:block;">0</span></div>
+            <div class="stat-card">غائبون <span id="absentT" style="color:#e74c3c; font-size:24px; font-weight:bold; display:block;">0</span></div>
         </div>
-
         <table>
             <thead><tr><th>المعلم</th><th>حضور</th><th>انصراف</th><th>الحالة</th></tr></thead>
             <tbody id="adminBody"></tbody>
         </table>
     </div>
-
-    <div id="settingsModal" class="modal">
+    <div id="setModal" class="modal">
         <div class="modal-content">
-            <i class="fas fa-times close-btn" onclick="toggleModal(false)"></i>
-            <h3><i class="fas fa-tools"></i> إعدادات المواعيد</h3>
-            <p style="font-size: 12px; color: #666; margin-bottom: 20px;">حدد المواعيد الرسمية للمجمع ليتم حساب التأخير تلقائياً</p>
-            
-            <div class="setting-row">
-                <label>وقت الحضور الرسمي:</label>
-                <input type="time" id="setStart">
-            </div>
-            <div class="setting-row">
-                <label>وقت الانصراف الرسمي:</label>
-                <input type="time" id="setEnd">
-            </div>
-            <button class="btn" style="background:var(--primary); width:100%; justify-content:center; margin-top:10px;" onclick="saveSettings()">
-                <i class="fas fa-save"></i> حفظ الإعدادات
-            </button>
+            <h3>إعدادات المواعيد</h3>
+            الحضور: <input type="time" id="setIn" style="width:100%; padding:10px; margin:10px 0;">
+            الانصراف: <input type="time" id="setOut" style="width:100%; padding:10px; margin:10px 0;">
+            <button class="btn" style="background:var(--primary); width:100%; justify-content:center;" onclick="saveSet()">حفظ</button>
         </div>
     </div>
-
     <script>
-        const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(config); const db = firebase.database();
-
-        function toggleModal(show) { document.getElementById('settingsModal').style.display = show ? 'flex' : 'none'; }
-
-        // حفظ المواعيد في Firebase
-        function saveSettings() {
-            const start = document.getElementById('setStart').value;
-            const end = document.getElementById('setEnd').value;
-            if(!start || !end) return alert("يرجى تحديد كافة المواعيد");
-
-            db.ref('settings/official_times').set({ start, end }).then(() => {
-                alert("✅ تم حفظ المواعيد بنجاح");
-                toggleModal(false);
-            });
+        const conf = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(conf); const db = firebase.database();
+        function toggleM(s) { document.getElementById('setModal').style.display = s?'flex':'none'; }
+        function saveSet() {
+            const start = document.getElementById('setIn').value, end = document.getElementById('setOut').value;
+            db.ref('settings/official_times').set({ start, end }).then(() => { alert("تم الحفظ"); toggleM(false); });
         }
-
-        // تحميل المواعيد الحالية عند فتح الصفحة
-        db.ref('settings/official_times').once('value', s => {
-            if(s.exists()){
-                document.getElementById('setStart').value = s.val().start;
-                document.getElementById('setEnd').value = s.val().end;
-            }
-        });
-
-        function updateClock() { const now = new Date(); document.getElementById('clock').innerText = now.toLocaleDateString('ar-SA') + " | " + now.toLocaleTimeString('ar-SA'); }
-        setInterval(updateClock, 1000);
-
+        db.ref('settings/official_times').once('value', s => { if(s.exists()){ document.getElementById('setIn').value=s.val().start; document.getElementById('setOut').value=s.val().end; }});
+        setInterval(() => { const now = new Date(); document.getElementById('clock').innerText = now.toLocaleTimeString('ar-SA'); }, 1000);
         const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
         db.ref('teachers').on('value', sT => {
-            const ts = sT.val() || {};
-            db.ref('attendance/' + today).on('value', sA => {
+            const ts = sT.val() || {}; db.ref('attendance/' + today).on('value', sA => {
                 const att = sA.val() || {}; const body = document.getElementById('adminBody'); body.innerHTML = "";
                 let p = 0; Object.keys(ts).forEach(id => {
-                    const r = att[id] || {}; let st = '<span class="badge absent">غائب</span>';
-                    if(r.inStatus === "حاضر") { p++; st = r.checkOut ? '<span class="badge" style="background:#eee">انصرف</span>' : '<span class="badge present">حاضر</span>'; }
+                    const r = att[id] || {}; let st = r.inStatus === "حاضر" ? 'حاضر' : 'غائب';
+                    if(st==='حاضر') p++;
                     body.innerHTML += `<tr><td>${ts[id].name}</td><td>${r.checkIn || '--'}</td><td>${r.checkOut || '--'}</td><td>${st}</td></tr>`;
                 });
                 document.getElementById('totalT').innerText = Object.keys(ts).length;

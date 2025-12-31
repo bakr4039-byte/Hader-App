@@ -2,143 +2,72 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>التقارير التفصيلية - ثانوية الصحافة</title>
-    
+    <title>تقارير ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
     <style>
-        :root { --primary: #3f51b5; --accent: #1a237e; --bg: #f8fafc; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 1200px; margin: auto; }
-        
-        .filter-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; }
-        .filter-grid { display: flex; gap: 15px; justify-content: center; align-items: flex-end; flex-wrap: wrap; margin-top: 15px; }
-        .input-box { display: flex; flex-direction: column; text-align: right; gap: 5px; }
-        input, select { padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-family: 'Tajawal'; min-width: 160px; }
-        
-        .btn-search { background: var(--primary); color: white; border: none; padding: 11px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        /* زر التصدير الجديد */
-        .btn-export { background: #27ae60; color: white; border: none; padding: 11px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; display: none; }
-        
-        .table-wrapper { background: white; border-radius: 20px; overflow-x: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: #1e293b; color: white; padding: 15px; font-size: 13px; }
-        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-        .txt-danger { color: #e11d48; font-weight: bold; }
+        body { font-family: 'Tajawal', sans-serif; background: #f8fafc; margin: 0; }
+        .top-nav { background: #1a237e; padding: 10px 20px; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        .filter-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; }
+        table { width: 100%; background: white; border-collapse: collapse; border-radius: 20px; overflow: hidden; }
+        th { background: #1e293b; color: white; padding: 15px; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; }
     </style>
 </head>
 <body>
-
+    <div class="top-nav"><a href="admin.html" style="color:white; text-decoration:none;"><i class="fas fa-arrow-right"></i> العودة للإدارة</a></div>
     <div class="container">
         <div class="filter-card">
-            <h2 style="margin:0; color:var(--accent);"><i class="fas fa-chart-bar"></i> تقرير أداء المعلمين الشامل</h2>
-            <div class="filter-grid">
-                <div class="input-box">
-                    <label>المعلم:</label>
-                    <select id="teacherSelect"><option value="all">جميع المعلمين</option></select>
-                </div>
-                <div class="input-box">
-                    <label>من:</label>
-                    <input type="date" id="dateFrom">
-                </div>
-                <div class="input-box">
-                    <label>إلى:</label>
-                    <input type="date" id="dateTo">
-                </div>
-                <button class="btn-search" onclick="processReport()"><i class="fas fa-search"></i> تحليل</button>
-                <button id="exportBtn" class="btn-export" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> تصدير Excel</button>
-            </div>
+            <h2>تقرير الأداء التجميعي</h2>
+            من: <input type="date" id="dateF"> إلى: <input type="date" id="dateT">
+            <button class="btn" style="background:#3f51b5" onclick="loadR()">تحليل</button>
+            <button class="btn" style="background:#27ae60" onclick="exportEX()">تصدير Excel</button>
         </div>
-
-        <div class="table-wrapper">
-            <table id="reportTable">
-                <thead>
-                    <tr>
-                        <th>اسم المعلم</th>
-                        <th>إجمالي الغياب</th>
-                        <th>أيام التأخير</th>
-                        <th>دقائق التأخير</th>
-                        <th>دقائق الخروج المبكر</th>
-                        <th>عدم انصراف</th>
-                    </tr>
-                </thead>
-                <tbody id="reportContent">
-                    <tr><td colspan="6">الرجاء تحديد التواريخ والضغط على تحليل</td></tr>
-                </tbody>
-            </table>
-        </div>
+        <table id="rTable">
+            <thead><tr><th>المعلم</th><th>الغياب</th><th>أيام التأخير</th><th>دقائق التأخير</th><th>خروج مبكر</th><th>بدون انصراف</th></tr></thead>
+            <tbody id="rBody"></tbody>
+        </table>
     </div>
-
     <script>
-        const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(config); const db = firebase.database();
+        const conf = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(conf); const db = firebase.database();
+        let sIn = "07:00", sOut = "13:00";
+        db.ref('settings/official_times').on('value', s => { if(s.exists()){ sIn=s.val().start; sOut=s.val().end; }});
 
-        let START_T = "07:00", END_T = "13:00";
-        db.ref('settings/official_times').on('value', s => { if(s.exists()){ START_T = s.val().start; END_T = s.val().end; }});
+        async function loadR() {
+            const start = new Date(document.getElementById('dateF').value), end = new Date(document.getElementById('dateT').value);
+            const tsS = await db.ref('teachers').once('value'); const ts = tsS.val();
+            let stats = {}; Object.keys(ts).forEach(id => stats[id] = { n:ts[id].name, a:0, ld:0, lm:0, em:0, no:0 });
 
-        db.ref('teachers').once('value', s => {
-            const list = s.val() || {}; const sel = document.getElementById('teacherSelect');
-            Object.keys(list).forEach(id => { let o = document.createElement('option'); o.value = id; o.innerHTML = list[id].name; sel.appendChild(o); });
-        });
-
-        document.getElementById('dateFrom').valueAsDate = new Date();
-        document.getElementById('dateTo').valueAsDate = new Date();
-
-        async function processReport() {
-            const startD = new Date(document.getElementById('dateFrom').value);
-            const endD = new Date(document.getElementById('dateTo').value);
-            const target = document.getElementById('teacherSelect').value;
-            const tbody = document.getElementById('reportContent');
-            tbody.innerHTML = "<tr><td colspan='6'>جاري التحليل...</td></tr>";
-
-            const tSnap = await db.ref('teachers').once('value');
-            const teachers = tSnap.val() || {};
-            let stats = {};
-
-            Object.keys(teachers).forEach(id => { if(target === 'all' || target === id) stats[id] = { name: teachers[id].name, abs: 0, latD: 0, latM: 0, earM: 0, noO: 0 }; });
-
-            for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
-                const dayK = d.toLocaleDateString('en-GB').replace(/\//g, '-');
-                const aSnap = await db.ref('attendance/' + dayK).once('value');
-                const dayD = aSnap.val() || {};
-
+            for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) {
+                const dk = d.toLocaleDateString('en-GB').replace(/\//g, '-');
+                const adS = await db.ref('attendance/'+dk).once('value'); const ad = adS.val() || {};
                 Object.keys(stats).forEach(id => {
-                    const r = dayD[id];
-                    if (!r) { stats[id].abs++; }
+                    const r = ad[id];
+                    if(!r) stats[id].a++;
                     else {
-                        const l = calc(START_T, r.checkIn); if(l > 0) { stats[id].latD++; stats[id].latM += l; }
-                        const e = r.checkOut ? calc(r.checkOut, END_T) : 0; if(e > 0) stats[id].earM += e;
-                        if(r.checkIn && !r.checkOut) stats[id].noO++;
+                        const l = diff(sIn, r.checkIn); if(l>0){ stats[id].ld++; stats[id].lm+=l; }
+                        const e = r.checkOut ? diff(r.checkOut, sOut) : 0; if(e>0) stats[id].em+=e;
+                        if(r.checkIn && !r.checkOut) stats[id].no++;
                     }
                 });
             }
-
-            tbody.innerHTML = "";
+            const body = document.getElementById('rBody'); body.innerHTML = "";
             Object.values(stats).forEach(s => {
-                tbody.innerHTML += `<tr><td>${s.name}</td><td class="txt-danger">${s.abs}</td><td>${s.latD}</td><td>${s.latM}</td><td>${s.earM}</td><td>${s.noO}</td></tr>`;
+                body.innerHTML += `<tr><td>${s.n}</td><td style="color:red">${s.a}</td><td>${s.ld}</td><td>${s.lm}</td><td>${s.em}</td><td>${s.no}</td></tr>`;
             });
-            document.getElementById('exportBtn').style.display = 'block'; // إظهار زر التصدير
         }
-
-        function calc(t1, t2) {
-            if(!t1 || !t2 || t2 === '--') return 0;
+        function diff(t1, t2) {
+            if(!t1 || !t2 || t2==='--') return 0;
             const [h1, m1] = t1.split(':').map(Number); const [h2, m2] = t2.split(':').map(Number);
-            const d = (h2 * 60 + m2) - (h1 * 60 + m1); return d > 0 ? d : 0;
+            const d = (h2*60+m2)-(h1*60+m1); return d>0?d:0;
         }
-
-        // --- وظيفة تصدير Excel المضافة ---
-        function exportToExcel() {
-            const table = document.getElementById("reportTable");
-            const wb = XLSX.utils.table_to_book(table, { sheet: "تقرير الأداء" });
-            const fileName = `تقرير_ثانوية_الصحافة_${new Date().toLocaleDateString()}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-        }
+        function exportEX() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('rTable')), 'تقرير.xlsx'); }
     </script>
 </body>
 </html>

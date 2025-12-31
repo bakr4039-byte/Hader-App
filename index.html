@@ -4,114 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>حاضر - ثانوية الصحافة</title>
-    
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3498db">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').then(() => console.log("PWA Active"));
-        }
-    </script>
-
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        
-        /* شريط المعلومات العلوي (اليوم والوقت) */
-        .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .day-text { font-size: 18px; font-weight: bold; display: block; margin-bottom: 5px; color: #3498db; }
-        .time-text { font-size: 14px; opacity: 0.9; }
-
-        /* صندوق مواعيد الدوام المضاف */
+        .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; }
         .work-hours { background: #fff; width: 100%; max-width: 400px; padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-around; border: 1px solid #e0e0e0; font-size: 13px; }
-        .work-hours div { text-align: center; }
-        .work-hours i { color: #3498db; margin-left: 5px; }
-        .work-hours span { font-weight: bold; color: #2c3e50; }
-
-        /* مؤشر النطاق الجغرافي */
-        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; }
         .in-range { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
         .out-range { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
-
-        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; margin-top: -10px; }
-        #map { height: 200px; width: 100%; max-width: 400px; border-radius: 20px; margin-bottom: 10px; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        
-        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; transition: 0.3s; }
-        .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; } .btn-p { background: #3498db; }
-        .loader { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; justify-content: center; align-items: center; flex-direction: column; }
+        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        #map { height: 200px; width: 100%; border-radius: 20px; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; }
+        .btn-back { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 12px; }
     </style>
 </head>
 <body>
-
-    <div id="L" class="loader"><i class="fas fa-spinner fa-spin fa-3x" style="color:#3498db"></i><p>جاري التحقق...</p></div>
-
+    <a href="admin.html" class="btn-back"><i class="fas fa-user-shield"></i> الإدارة</a>
     <div class="header-info" id="topBar" style="display:none;">
-        <span class="day-text" id="liveDay">---</span>
-        <div class="time-text">
-            <i class="far fa-clock"></i> <span id="liveTime">00:00:00</span> | 
-            <i class="far fa-calendar-alt"></i> <span id="liveDate">--/--/----</span>
-        </div>
+        <span style="font-size:18px; font-weight:bold; color:#3498db;" id="liveDay">---</span><br>
+        <small id="liveTime">00:00:00</small> | <small id="liveDate">--/--/----</small>
     </div>
-
-    <div class="work-hours" id="workHoursBox" style="display:none;">
-        <div><i class="fas fa-sign-in-alt"></i> الحضور: <span id="schIn">--:--</span></div>
-        <div><i class="fas fa-sign-out-alt"></i> الانصراف: <span id="schOut">--:--</span></div>
+    <div class="work-hours" id="workHours" style="display:none;">
+        <div>الحضور: <span id="schIn">--:--</span></div>
+        <div>الانصراف: <span id="schOut">--:--</span></div>
     </div>
-
     <div id="rangeStatus" class="range-badge out-range" style="display:none;">جاري تحديد الموقع...</div>
-
-    <div id="App" style="display: none; width: 100%; flex-direction: column; align-items: center;">
+    <div id="App" style="display: none; width: 100%; max-width: 400px;">
         <div id="map"></div>
         <div class="container">
-            <h2 id="TN" style="margin-top:0; color:#2c3e50;">ثانوية الصحافة</h2>
+            <h2 id="TN">ثانوية الصحافة</h2>
             <button class="btn btn-in" onclick="H('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
-            <div id="PS" style="display:none;"><button id="PB" class="btn btn-p" onclick="MP()"><i class="fas fa-walking"></i> استئذان / خروج مؤقت</button></div>
             <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
     </div>
-
     <script>
         const conf = { apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw", databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(conf); const db = firebase.database();
         const SLAT = 24.8001897, SLNG = 46.6449937, DIST = 150;
         const ID = new URLSearchParams(window.location.search).get('id');
 
-        // تحديث الساعة واليوم
         function updateClock() {
-            const now = new Date();
-            const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const now = new Date(); const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
             document.getElementById('liveDay').innerText = "يوم " + days[now.getDay()];
             document.getElementById('liveTime').innerText = now.toLocaleTimeString('en-GB');
             document.getElementById('liveDate').innerText = now.toLocaleDateString('en-GB');
         }
         setInterval(updateClock, 1000);
 
-        // جلب مواعيد الدوام من الإعدادات
-        db.ref('settings/official_times').on('value', snap => {
-            if(snap.exists()){
-                document.getElementById('schIn').innerText = snap.val().start;
-                document.getElementById('schOut').innerText = snap.val().end;
-            }
+        db.ref('settings/official_times').on('value', s => {
+            if(s.exists()){ document.getElementById('schIn').innerText = s.val().start; document.getElementById('schOut').innerText = s.val().end; }
         });
 
         if (ID) {
             db.ref('teachers/' + ID).once('value').then(s => {
-                document.getElementById('L').style.display = 'none';
                 if (s.exists()) {
-                    document.getElementById('App').style.display = 'flex';
+                    document.getElementById('App').style.display = 'block';
                     document.getElementById('topBar').style.display = 'block';
-                    document.getElementById('workHoursBox').style.display = 'flex';
+                    document.getElementById('workHours').style.display = 'flex';
                     document.getElementById('rangeStatus').style.display = 'block';
-                    document.getElementById('TN').innerText = "مرحباً: " + s.val().name;
-                    initM();
-                    startWatching();
-                } else { document.body.innerHTML = "<h2 style='text-align:center;margin-top:100px;'>الرابط غير مفعّل</h2>"; }
+                    document.getElementById('TN').innerText = s.val().name;
+                    initM(); startWatching();
+                }
             });
         }
 
@@ -126,14 +86,9 @@
             navigator.geolocation.watchPosition(p => {
                 const d = getD(p.coords.latitude, p.coords.longitude, SLAT, SLNG);
                 const stat = document.getElementById('rangeStatus');
-                if (UM) M.removeLayer(UM); 
-                UM = L.circleMarker([p.coords.latitude, p.coords.longitude], {color:'red', radius:8}).addTo(M);
-                
-                if (d <= DIST) {
-                    stat.innerText = "أنت داخل نطاق المدرسة ✅"; stat.className = "range-badge in-range";
-                } else {
-                    stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; stat.className = "range-badge out-range";
-                }
+                if (UM) M.removeLayer(UM); UM = L.circleMarker([p.coords.latitude, p.coords.longitude], {color:'red', radius:8}).addTo(M);
+                if (d <= DIST) { stat.innerText = "داخل النطاق ✅"; stat.className = "range-badge in-range"; }
+                else { stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; stat.className = "range-badge out-range"; }
             }, null, { enableHighAccuracy: true });
         }
 
@@ -143,9 +98,9 @@
                 if (d <= DIST) {
                     const now = new Date(); const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
                     const dk = now.toLocaleDateString('en-GB').replace(/\//g, '-');
-                    db.ref(`attendance/${dk}/${ID}`).update({ name: document.getElementById('TN').innerText.replace('مرحباً: ', ''), [t === 'حضور' ? 'checkIn' : 'checkOut']: time, inStatus: "حاضر" })
-                    .then(() => { alert(`تم تسجيل ${t}`); if(t === 'حضور') document.getElementById('PS').style.display = 'block'; });
-                } else { alert("لا يمكنك التبصيم وأنت خارج النطاق"); }
+                    db.ref(`attendance/${dk}/${ID}`).update({ name: document.getElementById('TN').innerText, [t === 'حضور' ? 'checkIn' : 'checkOut']: time, inStatus: "حاضر" })
+                    .then(() => alert(`تم تسجيل ${t}`));
+                } else alert("خارج النطاق!");
             });
         }
 
@@ -153,21 +108,6 @@
             const R = 6371e3; const dLa = (la2-la1)*Math.PI/180; const dLo = (lo2-lo1)*Math.PI/180;
             const a = Math.sin(dLa/2)**2 + Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        let ST = null;
-        function MP() {
-            const b = document.getElementById('PB'); const dk = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
-            if (!ST) { ST = new Date(); b.classList.add('active'); b.innerText = 'إنهاء الاستئذان'; }
-            else {
-                const diff = Math.round((new Date() - ST) / 60000);
-                db.ref(`attendance/${dk}/${ID}`).once('value').then(s => {
-                    const cur = s.val().outDuringDay || 0;
-                    db.ref(`attendance/${dk}/${ID}`).update({ outDuringDay: cur + diff }).then(() => {
-                        alert(`تمت العودة. المدة: ${diff} دقيقة`); ST = null; b.classList.remove('active'); b.innerText = 'استئذان / خروج مؤقت';
-                    });
-                });
-            }
         }
     </script>
 </body>
