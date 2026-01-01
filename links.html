@@ -18,13 +18,11 @@
         .header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; }
         .container { max-width: 900px; margin: -20px auto 50px; padding: 0 15px; }
         
-        /* قسم إضافة معلم */
         .add-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .input-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
         input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-family: 'Tajawal'; outline: none; min-width: 200px; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 12px; cursor: pointer; font-weight: bold; }
 
-        /* كروت المعلمين */
         .teacher-card { background: white; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); border-right: 6px solid var(--accent); }
         .meta { display: flex; justify-content: space-between; align-items: center; }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -34,7 +32,6 @@
         .btn-qr { background: #f3e5f5; color: #7b1fa2; }
         .btn-del { background: #ffebee; color: var(--danger); }
 
-        /* النافذة المنبثقة للباركود */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; max-width: 350px; width: 90%; }
         #qrcode { margin: 20px auto; display: flex; justify-content: center; background: white; padding: 10px; border-radius: 10px; }
@@ -57,12 +54,12 @@
             <div class="input-group">
                 <input type="text" id="teacherName" placeholder="اسم المعلم المعتمد...">
                 <input type="text" id="teacherID" placeholder="رقم الهوية أو المعرف...">
+                <input type="text" id="teacherPhone" placeholder="رقم الجوال (مثال: 9665...)">
                 <button class="btn-add" onclick="addNewTeacher()"><i class="fas fa-save"></i> حفظ وإضافة</button>
             </div>
         </div>
 
-        <div id="linksList">
-            </div>
+        <div id="linksList"></div>
     </div>
 
     <div id="qrModal" class="modal">
@@ -80,40 +77,47 @@
         const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(config); const db = firebase.database();
 
-        // 1. إضافة معلم جديد
+        // 1. إضافة معلم جديد مع الجوال
         function addNewTeacher() {
             const name = document.getElementById('teacherName').value;
             const id = document.getElementById('teacherID').value;
+            const phone = document.getElementById('teacherPhone').value;
+            
             if(name && id) {
-                db.ref('teachers/' + id).set({ name: name }).then(() => {
+                db.ref('teachers/' + id).set({ 
+                    name: name,
+                    phone: phone // حفظ رقم الجوال
+                }).then(() => {
                     alert("✅ تم حفظ المعلم بنجاح");
                     location.reload();
                 });
-            } else { alert("يرجى إكمال البيانات"); }
+            } else { alert("يرجى إكمال البيانات (الاسم والمعرف)"); }
         }
 
-        // 2. حذف معلم
         function deleteTeacher(id) {
             if(confirm("هل أنت متأكد من حذف المعلم؟ سيتم تعطيل الرابط الخاص به فوراً.")) {
                 db.ref('teachers/' + id).remove().then(() => alert("🗑️ تم الحذف والتعطيل"));
             }
         }
 
-        // 3. عرض القائمة
         db.ref('teachers').on('value', snap => {
             const list = snap.val() || {}; const cont = document.getElementById('linksList'); cont.innerHTML = "";
             Object.keys(list).forEach(id => {
                 const name = list[id].name;
+                const phone = list[id].phone || ""; // جلب الرقم
                 const link = `https://bakr4039-byte.github.io/Hader-App/index.html?id=${id}`;
                 cont.innerHTML += `
                     <div class="teacher-card">
                         <div class="meta">
-                            <span style="font-weight:bold; font-size:18px;">${name}</span>
+                            <div>
+                                <span style="font-weight:bold; font-size:18px;">${name}</span><br>
+                                <small style="color:#2e7d32">${phone ? '📱 ' + phone : ''}</small>
+                            </div>
                             <small style="color:#999">ID: ${id}</small>
                         </div>
                         <div class="actions">
                             <button class="btn-act btn-copy" onclick="copy('${link}')"><i class="fas fa-copy"></i> نسخ</button>
-                            <button class="btn-act btn-wa" onclick="sendWA('${link}', '${name}')"><i class="fab fa-whatsapp"></i> واتساب</button>
+                            <button class="btn-act btn-wa" onclick="sendWA('${link}', '${name}', '${phone}')"><i class="fab fa-whatsapp"></i> واتساب</button>
                             <button class="btn-act btn-qr" onclick="showQR('${link}', '${name}')"><i class="fas fa-qrcode"></i> باركود</button>
                             <button class="btn-act btn-del" onclick="deleteTeacher('${id}')"><i class="fas fa-trash"></i> حذف</button>
                         </div>
@@ -122,9 +126,14 @@
             });
         });
 
-        // وظائف الأزرار
         function copy(url) { navigator.clipboard.writeText(url).then(() => alert("✅ تم النسخ")); }
-        function sendWA(url, name) { window.open(`https://wa.me/?text=${encodeURIComponent('رابط بصمتك أ/ '+name+':\n'+url)}`, '_blank'); }
+
+        // وظيفة الإرسال المباشر للرقم المخزن
+        function sendWA(url, name, phone) { 
+            const text = encodeURIComponent('رابط بصمتك أ/ ' + name + ':\n' + url);
+            const waUrl = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+            window.open(waUrl, '_blank'); 
+        }
 
         let curName = "";
         function showQR(url, name) {
@@ -135,7 +144,6 @@
         }
         function closeModal() { document.getElementById('qrModal').style.display = 'none'; }
 
-        // تحميل الباركود كصورة
         function downloadQR() {
             const canvas = document.querySelector('#qrcode canvas');
             const link = document.createElement('a');
