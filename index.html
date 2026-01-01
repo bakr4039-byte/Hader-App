@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاضر - ثانوية الصحافة</title>
-    <link rel="manifest" href="manifest.json">
+    <title>حاضر - تسجيل البصمة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,78 +12,67 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        /* شريط اليوم والوقت الحي */
-        .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .day-text { font-size: 18px; font-weight: bold; display: block; margin-bottom: 5px; color: #3498db; }
-        /* صندوق مواعيد الدوام */
+        .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; }
         .work-hours { background: #fff; width: 100%; max-width: 400px; padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-around; border: 1px solid #e0e0e0; font-size: 13px; }
-        /* مؤشر النطاق الجغرافي */
-        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; font-size: 14px; }
+        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; }
         .in-range { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
         .out-range { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
         .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        #map { height: 200px; width: 100%; border-radius: 20px; margin-bottom: 10px; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; }
+        #map { height: 180px; width: 100%; border-radius: 20px; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; }
     </style>
 </head>
 <body>
-
     <div class="header-info" id="topBar">
-        <span class="day-text" id="liveDay">جاري التحميل...</span>
-        <div style="font-size: 14px; opacity: 0.9;">
-            <i class="far fa-calendar-alt"></i> <span id="liveDate">--/--/----</span> | 
-            <i class="far fa-clock"></i> <span id="liveTime">00:00:00</span>
-        </div>
+        <h3 id="schoolDisplay" style="margin:0">جاري التحميل...</h3>
+        <span style="font-size:16px; font-weight:bold; color:#3498db;" id="liveDay">---</span><br>
+        <small id="liveTime">00:00:00</small>
     </div>
-
     <div class="work-hours">
-        <div><i class="fas fa-sign-in-alt"></i> الحضور: <span id="schIn">--:--</span></div>
-        <div><i class="fas fa-sign-out-alt"></i> الانصراف: <span id="schOut">--:--</span></div>
+        <div>الحضور: <span id="schIn">--:--</span></div>
+        <div>الانصراف: <span id="schOut">--:--</span></div>
     </div>
-
     <div id="rangeStatus" class="range-badge out-range">جاري تحديد الموقع...</div>
-
-    <div id="App" style="width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center;">
+    <div id="App" style="display: none; width: 100%; max-width: 400px;">
         <div id="map"></div>
         <div class="container">
-            <h2 id="TN" style="margin-top:0; color:#2c3e50;">مرحباً بك</h2>
+            <h2 id="TN" style="margin-top:0"></h2>
             <button class="btn btn-in" onclick="H('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
             <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
     </div>
-
     <script>
-        const conf = { apiKey: "AIzaSyAuOkZYWzjBTpuWdeibeEWC0tVR87byEEw", databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
+        const conf = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(conf); const db = firebase.database();
-        const SLAT = 24.8001897, SLNG = 46.6449937, DIST = 150;
+        let SLAT = 24.8001897, SLNG = 46.6449937, DIST = 150;
         const ID = new URLSearchParams(window.location.search).get('id');
 
-        function updateClock() {
-            const now = new Date();
-            const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-            document.getElementById('liveDay').innerText = days[now.getDay()];
-            document.getElementById('liveTime').innerText = now.toLocaleTimeString('en-GB');
-            document.getElementById('liveDate').innerText = now.toLocaleDateString('en-GB');
-        }
-        setInterval(updateClock, 1000);
-
-        db.ref('settings/official_times').on('value', snap => {
-            if(snap.exists()){
-                document.getElementById('schIn').innerText = snap.val().start;
-                document.getElementById('schOut').innerText = snap.val().end;
+        // جلب الإعدادات المحدثة
+        db.ref('settings/all').on('value', s => {
+            if(s.exists()){
+                const d = s.val();
+                document.getElementById('schoolDisplay').innerText = d.school_name || "ثانوية الصحافة";
+                document.getElementById('schIn').innerText = d.official_in || "--:--";
+                document.getElementById('schOut').innerText = d.official_out || "--:--";
+                DIST = parseInt(d.range) || 150;
             }
         });
+
+        function updateClock() {
+            const now = new Date(); const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            document.getElementById('liveDay').innerText = "يوم " + days[now.getDay()];
+            document.getElementById('liveTime').innerText = now.toLocaleTimeString('ar-SA');
+        }
+        setInterval(updateClock, 1000);
 
         if (ID) {
             db.ref('teachers/' + ID).once('value').then(s => {
                 if (s.exists()) {
-                    document.getElementById('TN').innerText = "مرحباً: " + s.val().name;
-                    initM();
-                    startWatching();
-                } else {
-                    document.body.innerHTML = "<h2 style='text-align:center;margin-top:100px;'>الرابط غير مفعّل</h2>";
-                }
+                    document.getElementById('App').style.display = 'block';
+                    document.getElementById('TN').innerText = s.val().name;
+                    initM(); startWatching();
+                } else { document.body.innerHTML = "<h2>عفواً، الرابط غير صالح</h2>"; }
             });
         }
 
@@ -100,11 +88,8 @@
                 const d = getD(p.coords.latitude, p.coords.longitude, SLAT, SLNG);
                 const stat = document.getElementById('rangeStatus');
                 if (UM) M.removeLayer(UM); UM = L.circleMarker([p.coords.latitude, p.coords.longitude], {color:'red', radius:8}).addTo(M);
-                if (d <= DIST) {
-                    stat.innerText = "أنت داخل نطاق المدرسة ✅"; stat.className = "range-badge in-range";
-                } else {
-                    stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; stat.className = "range-badge out-range";
-                }
+                if (d <= DIST) { stat.innerText = "داخل النطاق المسموح ✅"; stat.className = "range-badge in-range"; }
+                else { stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; stat.className = "range-badge out-range"; }
             }, null, { enableHighAccuracy: true });
         }
 
@@ -112,17 +97,14 @@
             navigator.geolocation.getCurrentPosition(p => {
                 const d = getD(p.coords.latitude, p.coords.longitude, SLAT, SLNG);
                 if (d <= DIST) {
-                    const now = new Date();
-                    const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+                    const now = new Date(); const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
                     const dk = now.toLocaleDateString('en-GB').replace(/\//g, '-');
-                    db.ref(`attendance/${dk}/${ID}`).update({
-                        name: document.getElementById('TN').innerText.replace('مرحباً: ', ''),
-                        [t === 'حضور' ? 'checkIn' : 'checkOut']: time,
-                        inStatus: "حاضر"
+                    db.ref(`attendance/${dk}/${ID}`).update({ 
+                        name: document.getElementById('TN').innerText, 
+                        [t === 'حضور' ? 'checkIn' : 'checkOut']: time, 
+                        inStatus: "حاضر" 
                     }).then(() => alert(`تم تسجيل ${t} بنجاح`));
-                } else {
-                    alert("لا يمكنك التبصيم وأنت خارج النطاق!");
-                }
+                } else { alert("خارج النطاق!"); }
             });
         }
 

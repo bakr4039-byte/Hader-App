@@ -24,8 +24,19 @@
         td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f1f1; font-weight: 500; }
         .badge { padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: bold; }
         .present { background: #e8f5e9; color: #2e7d32; } .absent { background: #ffebee; color: #c62828; }
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
-        .modal-content { background:white; padding:30px; border-radius:20px; width:350px; text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        
+        /* تصميم نافذة الإعدادات الكبيرة (المحاكية للصورة) */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; justify-content:center; align-items:center; }
+        .modal-content { background:white; border-radius:25px; width:95%; max-width:900px; height: 90vh; overflow-y: auto; position: relative; display: flex; flex-direction: column; }
+        .modal-header { background: #f8f9fa; padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; border-radius: 25px 25px 0 0; }
+        .modal-body { padding: 25px; flex: 1; }
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .set-section { background: #fafafa; padding: 15px; border-radius: 15px; border: 1px solid #eee; }
+        .set-section h4 { margin: 0 0 15px 0; color: var(--accent); border-bottom: 2px solid var(--primary); display: inline-block; }
+        .form-group { margin-bottom: 12px; text-align: right; }
+        .form-group label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Tajawal'; box-sizing: border-box; }
+        .modal-footer { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; justify-content: center; }
     </style>
 </head>
 <body>
@@ -33,21 +44,24 @@
         <h1>لوحة إدارة ثانوية الصحافة</h1>
         <div id="clock" style="font-size: 14px; opacity: 0.8; margin-top: 10px;"></div>
     </div>
+
     <div class="container">
         <div class="action-bar">
             <a href="links.html" class="btn" style="background:#34495e"><i class="fas fa-link"></i> الروابط</a>
             <a href="reports.html" class="btn" style="background:#8e44ad"><i class="fas fa-file-invoice"></i> التقارير</a>
             <button class="btn" style="background:#607d8b" onclick="toggleM(true)"><i class="fas fa-cog"></i> الإعدادات</button>
-            <button class="btn" style="background:#e67e22" onclick="location.reload()"><i class="fas fa-sync"></i> تحديث الحالة</button>
+            <button class="btn" style="background:#e67e22" onclick="location.reload()"><i class="fas fa-sync"></i> تحديث</button>
         </div>
+
         <div class="stats-grid">
             <div class="stat-card">إجمالي المعلمين <span class="val" id="totalT">0</span></div>
             <div class="stat-card">حاضرون الآن <span class="val" id="presentT" style="color:#2ecc71">0</span></div>
             <div class="stat-card">غائبون <span class="val" id="absentT" style="color:#e74c3c">0</span></div>
         </div>
+
         <div class="table-card">
             <table>
-                <thead><tr><th>المعلم</th><th>حضور</th><th>انصراف</th><th>خروج (د)</th><th>الحالة</th></tr></thead>
+                <thead><tr><th>المعلم</th><th>حضور</th><th>انصراف</th><th>الحالة</th></tr></thead>
                 <tbody id="adminBody"></tbody>
             </table>
         </div>
@@ -55,13 +69,50 @@
 
     <div id="setModal" class="modal">
         <div class="modal-content">
-            <h3>إعدادات المواعيد</h3>
-            <div style="text-align:right; margin-bottom:15px;">
-                الحضور: <input type="time" id="setIn" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
-                الانصراف: <input type="time" id="setOut" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-sliders-h"></i> خيارات البرنامج والإعدادات المتقدمة</h3>
+                <i class="fas fa-times" style="cursor:pointer" onclick="toggleM(false)"></i>
             </div>
-            <button class="btn" style="background:var(--primary); width:100%; justify-content:center;" onclick="saveSet()">حفظ</button>
-            <button onclick="toggleM(false)" style="margin-top:10px; border:none; background:none; color:#999; cursor:pointer;">إلغاء</button>
+            <div class="modal-body">
+                <div class="settings-grid">
+                    <div class="set-section">
+                        <h4>بيانات المنشأة</h4>
+                        <div class="form-group"><label>اسم المدرسة / المجمع:</label><input type="text" id="s_name"></div>
+                        <div class="form-group"><label>مدير المدرسة:</label><input type="text" id="s_manager"></div>
+                        <div class="form-group"><label>الإدارة التعليمية / المنطقة:</label><input type="text" id="s_dist"></div>
+                        <div class="form-group"><label>جوال المدرسة (للواتساب):</label><input type="text" id="s_phone"></div>
+                    </div>
+
+                    <div class="set-section">
+                        <h4>مواعيد الدوام</h4>
+                        <div class="form-group"><label>وقت الحضور الرسمي:</label><input type="time" id="s_in"></div>
+                        <div class="form-group"><label>وقت الانصراف الرسمي:</label><input type="time" id="s_out"></div>
+                        <div class="form-group"><label>مدة السماح بالتأخير (بالدقائق):</label><input type="number" id="s_grace" value="0"></div>
+                        <div class="form-group"><label>المسافة المسموحة (بالمتر):</label><input type="number" id="s_range" value="150"></div>
+                    </div>
+
+                    <div class="set-section">
+                        <h4>قوالب الرسائل</h4>
+                        <div class="form-group"><label>رسالة تأكيد الحضور:</label><textarea id="m_in" rows="2"></textarea></div>
+                        <div class="form-group"><label>رسالة تأكيد الانصراف:</label><textarea id="m_out" rows="2"></textarea></div>
+                        <div class="form-group"><label>رسالة الغياب:</label><textarea id="m_abs" rows="2"></textarea></div>
+                    </div>
+
+                    <div class="set-section">
+                        <h4>الإعدادات التقنية</h4>
+                        <div class="form-group"><label>ايميل الإدارة الرسمي:</label><input type="email" id="s_email"></div>
+                        <div class="form-group"><label>كلمة سر النظام (اختياري):</label><input type="password" id="s_pass"></div>
+                        <div style="display:flex; gap:5px; margin-top:20px;">
+                            <button class="btn" style="background:#e74c3c; flex:1; font-size:11px" onclick="clearAtt()">حذف الحركات</button>
+                            <button class="btn" style="background:#34495e; flex:1; font-size:11px" onclick="clearMemory()">إفراغ الذاكرة</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="background:var(--success); width: 200px; justify-content:center" onclick="saveAllSettings()">حفظ كافة الإعدادات</button>
+                <button class="btn" style="background:#999" onclick="toggleM(false)">إغلاق</button>
+            </div>
         </div>
     </div>
 
@@ -70,33 +121,59 @@
         firebase.initializeApp(config); const db = firebase.database();
 
         function toggleM(s) { document.getElementById('setModal').style.display = s?'flex':'none'; }
-        function saveSet() {
-            const start = document.getElementById('setIn').value, end = document.getElementById('setOut').value;
-            db.ref('settings/official_times').set({ start, end }).then(() => { alert("تم الحفظ"); toggleM(false); });
-        }
-        db.ref('settings/official_times').once('value', s => { if(s.exists()){ document.getElementById('setIn').value=s.val().start; document.getElementById('setOut').value=s.val().end; }});
 
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleDateString('ar-SA') + " | " + now.toLocaleTimeString('ar-SA');
-        }, 1000);
+        // حفظ كافة الإعدادات دفعة واحدة
+        function saveAllSettings() {
+            const settings = {
+                school_name: document.getElementById('s_name').value,
+                manager: document.getElementById('s_manager').value,
+                district: document.getElementById('s_dist').value,
+                phone: document.getElementById('s_phone').value,
+                official_in: document.getElementById('s_in').value,
+                official_out: document.getElementById('s_out').value,
+                grace_period: document.getElementById('s_grace').value,
+                range: document.getElementById('s_range').value,
+                msg_in: document.getElementById('m_in').value,
+                msg_out: document.getElementById('m_out').value,
+                msg_abs: document.getElementById('m_abs').value,
+                email: document.getElementById('s_email').value
+            };
+            db.ref('settings/all').set(settings).then(() => {
+                alert("✅ تم حفظ كافة الإعدادات بنجاح وتحديث النظام");
+                toggleM(false);
+            });
+        }
+
+        // تحميل الإعدادات عند الفتح
+        db.ref('settings/all').on('value', s => {
+            if(s.exists()){
+                const d = s.val();
+                document.getElementById('s_name').value = d.school_name || "";
+                document.getElementById('s_manager').value = d.manager || "";
+                document.getElementById('s_dist').value = d.district || "";
+                document.getElementById('s_phone').value = d.phone || "";
+                document.getElementById('s_in').value = d.official_in || "";
+                document.getElementById('s_out').value = d.official_out || "";
+                document.getElementById('s_grace').value = d.grace_period || 0;
+                document.getElementById('s_range').value = d.range || 150;
+                document.getElementById('m_in').value = d.msg_in || "";
+                document.getElementById('m_out').value = d.msg_out || "";
+                document.getElementById('m_abs').value = d.msg_abs || "";
+                document.getElementById('s_email').value = d.email || "";
+            }
+        });
+
+        function clearAtt() { if(confirm("هل تريد حذف كافة حركات الحضور والغياب المسجلة؟")) db.ref('attendance').remove(); }
+        setInterval(() => { const now = new Date(); document.getElementById('clock').innerText = now.toLocaleString('ar-SA'); }, 1000);
 
         const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
         db.ref('teachers').on('value', sT => {
-            const ts = sT.val() || {};
-            db.ref('attendance/' + today).on('value', sA => {
-                const att = sA.val() || {};
-                const body = document.getElementById('adminBody');
-                if(!body) return;
-                body.innerHTML = "";
-                let p = 0;
-                Object.keys(ts).forEach(id => {
-                    const r = att[id] || {};
-                    let st = r.inStatus === "حاضر" ? '<span class="badge present">حاضر</span>' : '<span class="badge absent">غائب</span>';
+            const ts = sT.val() || {}; db.ref('attendance/' + today).on('value', sA => {
+                const att = sA.val() || {}; const body = document.getElementById('adminBody'); body.innerHTML = "";
+                let p = 0; Object.keys(ts).forEach(id => {
+                    const r = att[id] || {}; let st = r.inStatus === "حاضر" ? '<span class="badge present">حاضر</span>' : '<span class="badge absent">غائب</span>';
                     if(r.inStatus === "حاضر") p++;
-                    if(r.checkOut) st = '<span class="badge" style="background:#eee">انصرف</span>';
-                    
-                    body.innerHTML += `<tr><td>${ts[id].name}</td><td>${r.checkIn || '--'}</td><td>${r.checkOut || '--'}</td><td>${r.outDuringDay || 0}</td><td>${st}</td></tr>`;
+                    body.innerHTML += `<tr><td>${ts[id].name}</td><td>${r.checkIn || '--'}</td><td>${r.checkOut || '--'}</td><td>${st}</td></tr>`;
                 });
                 document.getElementById('totalT').innerText = Object.keys(ts).length;
                 document.getElementById('presentT').innerText = p;

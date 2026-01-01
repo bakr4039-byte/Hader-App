@@ -2,81 +2,63 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تقارير ثانوية الصحافة</title>
+    <title>تقارير الأداء - ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #3f51b5; --accent: #1a237e; --bg: #f8fafc; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; }
-        .top-nav { background: var(--accent); padding: 12px 20px; display: flex; align-items: center; }
-        .btn-back { color: white; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 8px; opacity: 0.9; }
-        .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
+        body { font-family: 'Tajawal', sans-serif; background: #f8fafc; margin: 0; }
+        .top-nav { background: #1a237e; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; color: white; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
         .filter-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 25px; }
-        .input-group { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 15px; }
-        input[type="date"], select { padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-family: 'Tajawal'; }
-        .btn { padding: 11px 25px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; }
-        .table-wrapper { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         th { background: #1e293b; color: white; padding: 15px; font-size: 13px; }
         td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 500; }
-        tr:hover { background-color: #f9fbff; }
+        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; }
     </style>
 </head>
 <body>
-    <div class="top-nav"><a href="admin.html" class="btn-back"><i class="fas fa-arrow-right"></i> العودة للوحة الإدارة</a></div>
+    <div class="top-nav">
+        <a href="admin.html" style="color:white; text-decoration:none;"><i class="fas fa-arrow-right"></i> العودة</a>
+        <h3 id="repSchool" style="margin:0"></h3>
+        <span>تقرير الأداء</span>
+    </div>
     <div class="container">
         <div class="filter-card">
-            <h2 style="margin:0;"><i class="fas fa-file-invoice"></i> تقرير الأداء التجميعي للمعلمين</h2>
-            <div class="input-group">
-                المعلم: <select id="tSel"><option value="all">جميع المعلمين</option></select>
-                من: <input type="date" id="dateF">
-                إلى: <input type="date" id="dateT">
-                <button class="btn" style="background:var(--primary)" onclick="loadR()"><i class="fas fa-sync"></i> تحليل</button>
-                <button class="btn" style="background:#27ae60" onclick="exportEX()"><i class="fas fa-file-excel"></i> تصدير Excel</button>
-            </div>
+            <input type="date" id="dateF"> إلى <input type="date" id="dateT">
+            <button class="btn" style="background:#3f51b5; margin:0 10px;" onclick="loadR()">تحليل</button>
+            <button class="btn" style="background:#27ae60" onclick="exportEX()">تصدير Excel</button>
         </div>
-        <div class="table-wrapper">
-            <table id="rTable">
-                <thead>
-                    <tr>
-                        <th>المعلم</th>
-                        <th style="background:#fff1f2; color:#be123c;">إجمالي الغياب</th>
-                        <th style="background:#fffbeb; color:#b45309;">أيام التأخير</th>
-                        <th style="background:#fffbeb; color:#b45309;">دقائق التأخير</th>
-                        <th style="background:#f5f3ff; color:#6d28d9;">دقائق الخروج المبكر</th>
-                        <th style="background:#f8fafc; color:#334155;">بدون انصراف</th>
-                    </tr>
-                </thead>
-                <tbody id="rBody"><tr><td colspan="6">الرجاء اختيار التواريخ والضغط على تحليل</td></tr></tbody>
-            </table>
-        </div>
+        <table id="rTable">
+            <thead><tr><th>المعلم</th><th>الغياب</th><th>أيام التأخير</th><th>دقائق التأخير</th><th>خروج مبكر</th><th>بدون انصراف</th></tr></thead>
+            <tbody id="rBody"></tbody>
+        </table>
     </div>
     <script>
         const conf = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(conf); const db = firebase.database();
         let sIn = "07:00", sOut = "13:00";
-        db.ref('settings/official_times').on('value', s => { if(s.exists()){ sIn=s.val().start; sOut=s.val().end; }});
-        db.ref('teachers').once('value', s => { 
-            const ts = s.val(); Object.keys(ts).forEach(id => {
-                let o = document.createElement('option'); o.value = id; o.innerHTML = ts[id].name;
-                document.getElementById('tSel').appendChild(o);
-            });
+
+        db.ref('settings/all').on('value', s => {
+            if(s.exists()){
+                const d = s.val();
+                document.getElementById('repSchool').innerText = d.school_name;
+                sIn = d.official_in; sOut = d.official_out;
+            }
         });
+
         async function loadR() {
-            const start = new Date(document.getElementById('dateF').value), end = new Date(document.getElementById('dateT').value), selId = document.getElementById('tSel').value;
-            if(isNaN(start) || isNaN(end)) return alert("يرجى اختيار تاريخ صحيح");
-            const tsS = await db.ref('teachers').once('value'); const ts = tsS.val();
-            let stats = {}; Object.keys(ts).forEach(id => { if(selId==='all'||selId===id) stats[id] = { n:ts[id].name, a:0, ld:0, lm:0, em:0, no:0 }; });
+            const start = new Date(document.getElementById('dateF').value), end = new Date(document.getElementById('dateT').value);
+            const tsS = await db.ref('teachers').once('value'); const ts = tsS.val() || {};
+            let stats = {}; Object.keys(ts).forEach(id => stats[id] = { n:ts[id].name, a:0, ld:0, lm:0, em:0, no:0 });
 
             for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) {
                 const dk = d.toLocaleDateString('en-GB').replace(/\//g, '-');
                 const adS = await db.ref('attendance/'+dk).once('value'); const ad = adS.val() || {};
                 Object.keys(stats).forEach(id => {
-                    const r = ad[id];
-                    if(!r) stats[id].a++;
+                    const r = ad[id]; if(!r) stats[id].a++;
                     else {
                         const l = diff(sIn, r.checkIn); if(l>0){ stats[id].ld++; stats[id].lm+=l; }
                         const e = r.checkOut ? diff(r.checkOut, sOut) : 0; if(e>0) stats[id].em+=e;
@@ -86,7 +68,7 @@
             }
             const body = document.getElementById('rBody'); body.innerHTML = "";
             Object.values(stats).forEach(s => {
-                body.innerHTML += `<tr><td><strong>${s.n}</strong></td><td style="color:red">${s.a} يوم</td><td>${s.ld} يوم</td><td>${s.lm} د</td><td>${s.em} د</td><td>${s.no} مرة</td></tr>`;
+                body.innerHTML += `<tr><td>${s.n}</td><td style="color:red">${s.a}</td><td>${s.ld}</td><td>${s.lm}</td><td>${s.em}</td><td>${s.no}</td></tr>`;
             });
         }
         function diff(t1, t2) {
@@ -94,7 +76,7 @@
             const [h1, m1] = t1.split(':').map(Number); const [h2, m2] = t2.split(':').map(Number);
             const d = (h2*60+m2)-(h1*60+m1); return d>0?d:0;
         }
-        function exportEX() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('rTable')), 'تقرير_اداء_ثانوية_الصحافة.xlsx'); }
+        function exportEX() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('rTable')), 'تقرير.xlsx'); }
     </script>
 </body>
 </html>
