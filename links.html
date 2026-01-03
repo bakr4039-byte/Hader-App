@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة المعلمين والروابط - ثانوية الصحافة</title>
+    <title>إدارة الموظفين والروابط - ثانوية الصحافة</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -18,20 +18,21 @@
         .header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; }
         .container { max-width: 1000px; margin: -20px auto 50px; padding: 0 15px; }
         
+        /* قسم إضافة موظف جديد */
         .add-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .input-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
         input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-family: 'Tajawal'; outline: none; min-width: 180px; font-size: 14px; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .btn-add:hover { background: var(--accent); transform: translateY(-2px); }
 
-        .teacher-card { background: white; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); border-right: 6px solid var(--accent); }
+        .employee-card { background: white; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); border-right: 6px solid var(--accent); }
         .meta { display: flex; justify-content: space-between; align-items: center; }
         .actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-act { padding: 9px 15px; border: none; border-radius: 10px; cursor: pointer; font-family: 'Tajawal'; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px; }
         .btn-copy { background: #e3f2fd; color: #1565c0; }
         .btn-wa { background: #e8f5e9; color: #2e7d32; }
         .btn-qr { background: #f3e5f5; color: #7b1fa2; }
-        .btn-edit { background: #fff3e0; color: var(--warning); } /* زر التعديل الجديد */
+        .btn-edit { background: #fff3e0; color: var(--warning); }
         .btn-del { background: #ffebee; color: var(--danger); }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
@@ -46,19 +47,19 @@
             <a href="admin.html" style="color:white; text-decoration:none; font-size:14px; opacity:0.8; display:block; margin-bottom:10px;">
                 <i class="fas fa-arrow-right"></i> العودة للوحة الإدارة
             </a>
-            <h1><i class="fas fa-users-cog"></i> مركز إدارة المعلمين</h1>
+            <h1><i class="fas fa-users-cog"></i> مركز إدارة الموظفين</h1>
         </div>
     </header>
 
     <div class="container">
         <div class="add-card">
-            <h3 style="margin:0; color:var(--primary);"><i class="fas fa-plus-circle"></i> إضافة معلم جديد</h3>
+            <h3 style="margin:0; color:var(--primary);"><i class="fas fa-plus-circle"></i> إضافة موظف جديد</h3>
             <div class="input-group">
-                <input type="text" id="teacherName" placeholder="اسم المعلم المعتمد...">
-                <input type="text" id="teacherID" placeholder="رقم الهوية (ID)...">
-                <input type="text" id="teacherPhone" placeholder="رقم الجوال (05...)">
-                <input type="text" id="teacherPass" placeholder="تعيين كلمة مرور...">
-                <button class="btn-add" onclick="addNewTeacher()"><i class="fas fa-save"></i> حفظ وإضافة</button>
+                <input type="text" id="employeeName" placeholder="اسم الموظف المعتمد...">
+                <input type="text" id="employeeID" placeholder="رقم الهوية أو الوظيفي (ID)...">
+                <input type="text" id="employeePhone" placeholder="رقم الجوال (05...)">
+                <input type="text" id="employeePass" placeholder="تعيين كلمة مرور الموظف...">
+                <button class="btn-add" onclick="addNewEmployee()"><i class="fas fa-save"></i> حفظ وإضافة</button>
             </div>
         </div>
 
@@ -78,10 +79,10 @@
 
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h3 style="color: var(--primary); margin-bottom: 20px;"><i class="fas fa-edit"></i> تعديل بيانات المعلم</h3>
-            <input type="hidden" id="editTeacherId">
+            <h3 style="color: var(--primary); margin-bottom: 20px;"><i class="fas fa-edit"></i> تعديل بيانات الموظف</h3>
+            <input type="hidden" id="editEmployeeId">
             <div style="display: flex; flex-direction: column; gap: 12px; text-align: right;">
-                <label style="font-size: 12px; font-weight: bold;">اسم المعلم:</label>
+                <label style="font-size: 12px; font-weight: bold;">اسم الموظف:</label>
                 <input type="text" id="editName" style="min-width: unset;">
                 
                 <label style="font-size: 12px; font-weight: bold;">رقم الجوال:</label>
@@ -91,7 +92,7 @@
                 <input type="text" id="editPass" style="min-width: unset;">
             </div>
             <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button class="btn-add" style="background: var(--success); flex: 1;" onclick="saveTeacherEdit()">حفظ التعديلات</button>
+                <button class="btn-add" style="background: var(--success); flex: 1;" onclick="saveEmployeeEdit()">حفظ التعديلات</button>
                 <button class="btn-act" style="background: #eee; flex: 1; justify-content: center;" onclick="closeModal('editModal')">إلغاء</button>
             </div>
         </div>
@@ -108,11 +109,12 @@
             return p;
         }
 
-        function addNewTeacher() {
-            const name = document.getElementById('teacherName').value;
-            const id = document.getElementById('teacherID').value;
-            const pass = document.getElementById('teacherPass').value;
-            let phone = document.getElementById('teacherPhone').value;
+        // إضافة موظف جديد
+        function addNewEmployee() {
+            const name = document.getElementById('employeeName').value;
+            const id = document.getElementById('employeeID').value;
+            const pass = document.getElementById('employeePass').value;
+            let phone = document.getElementById('employeePhone').value;
             
             if(name && id && pass) {
                 const formattedPhone = formatPhoneNumber(phone);
@@ -121,23 +123,23 @@
                     phone: formattedPhone,
                     password: pass
                 }).then(() => {
-                    alert("✅ تم حفظ المعلم بنجاح");
+                    alert("✅ تم حفظ الموظف بنجاح");
                     location.reload();
                 });
             } else { alert("يرجى إكمال البيانات (الاسم، المعرف، وكلمة المرور)"); }
         }
 
-        // وظائف التعديل الجديدة
+        // وظائف التعديل
         function openEditModal(id, name, phone, pass) {
-            document.getElementById('editTeacherId').value = id;
+            document.getElementById('editEmployeeId').value = id;
             document.getElementById('editName').value = name;
             document.getElementById('editPhone').value = phone;
             document.getElementById('editPass').value = pass;
             document.getElementById('editModal').style.display = 'flex';
         }
 
-        function saveTeacherEdit() {
-            const id = document.getElementById('editTeacherId').value;
+        function saveEmployeeEdit() {
+            const id = document.getElementById('editEmployeeId').value;
             const name = document.getElementById('editName').value;
             const phone = formatPhoneNumber(document.getElementById('editPhone').value);
             const pass = document.getElementById('editPass').value;
@@ -148,29 +150,30 @@
                     phone: phone,
                     password: pass
                 }).then(() => {
-                    alert("✅ تم تحديث البيانات بنجاح");
+                    alert("✅ تم تحديث بيانات الموظف بنجاح");
                     closeModal('editModal');
                 });
             } else { alert("الاسم وكلمة المرور مطلوبة"); }
         }
 
-        function deleteTeacher(id) {
-            if(confirm("سيتم حذف المعلم وتعطيل رابطه نهائياً، هل أنت متأكد؟")) {
+        function deleteEmployee(id) {
+            if(confirm("سيتم حذف الموظف وتعطيل رابطه نهائياً، هل أنت متأكد؟")) {
                 db.ref('teachers/' + id).remove();
             }
         }
 
+        // عرض قائمة الموظفين
         db.ref('teachers').on('value', snap => {
             const list = snap.val() || {}; const cont = document.getElementById('linksList'); cont.innerHTML = "";
             Object.keys(list).forEach(id => {
-                const teacher = list[id];
-                const name = teacher.name;
-                const phone = teacher.phone || "";
-                const pass = teacher.password || "";
+                const emp = list[id];
+                const name = emp.name;
+                const phone = emp.phone || "";
+                const pass = emp.password || "";
                 const link = `https://bakr4039-byte.github.io/Hader-App/index.html?id=${id}`;
                 
                 cont.innerHTML += `
-                    <div class="teacher-card">
+                    <div class="employee-card">
                         <div class="meta">
                             <div>
                                 <span style="font-weight:bold; font-size:17px;">${name}</span><br>
@@ -180,18 +183,18 @@
                             <small style="color:#999">معرف: ${id}</small>
                         </div>
                         <div class="actions">
-                            <button class="btn-act btn-copy" onclick="copy('${link}')"><i class="fas fa-copy"></i> نسخ</button>
+                            <button class="btn-act btn-copy" onclick="copy('${link}')"><i class="fas fa-copy"></i> نسخ الرابط</button>
                             <button class="btn-act btn-wa" onclick="sendWA('${link}', '${name}', '${phone}')"><i class="fab fa-whatsapp"></i> واتساب</button>
                             <button class="btn-act btn-qr" onclick="showQR('${link}', '${name}')"><i class="fas fa-qrcode"></i> باركود</button>
                             <button class="btn-act btn-edit" onclick="openEditModal('${id}', '${name}', '${phone}', '${pass}')"><i class="fas fa-edit"></i> تعديل</button>
-                            <button class="btn-act btn-del" onclick="deleteTeacher('${id}')"><i class="fas fa-trash"></i> حذف</button>
+                            <button class="btn-act btn-del" onclick="deleteEmployee('${id}')"><i class="fas fa-trash"></i> حذف</button>
                         </div>
                     </div>
                 `;
             });
         });
 
-        function copy(url) { navigator.clipboard.writeText(url).then(() => alert("✅ تم نسخ رابط البصمة")); }
+        function copy(url) { navigator.clipboard.writeText(url).then(() => alert("✅ تم نسخ رابط بصمة الموظف")); }
 
         function sendWA(url, name, phone) { 
             const msg = encodeURIComponent('مرحباً أ/ ' + name + '، هذا هو رابط البصمة الخاص بك لمجمع ثانوية الصحافة:\n' + url);
