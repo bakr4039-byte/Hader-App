@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة إدارة الموظفين</title>
+    <title>منضبط - لوحة الإدارة والتحكم</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -11,32 +11,44 @@
     <style>
         :root { --primary: #3f51b5; --accent: #1a237e; --bg: #f4f7f6; --danger: #e74c3c; --success: #27ae60; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; }
-        .header { background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 40px 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        /* الهوية البصرية الجديدة في الهيدر */
+        .header { background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; padding: 30px 20px 50px; text-align: center; border-radius: 0 0 40px 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .branding-title { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 5px; }
+        .branding-title h1 { margin: 0; font-size: 28px; }
+        .branding-tagline { opacity: 0.9; font-size: 14px; margin: 0; font-weight: normal; }
+
         .container { max-width: 1100px; margin: -30px auto 50px; padding: 0 20px; }
-        .action-bar { display: flex; justify-content: center; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
-        .btn { padding: 12px 22px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 14px; transition: 0.3s; }
+        .action-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        .btn { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 13px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: white; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .stat-card .val { display: block; font-size: 32px; font-weight: bold; color: var(--primary); }
+        .stat-card .label { color: #7f8c8d; font-size: 14px; margin-bottom: 10px; display: block; }
+        .stat-card .val { display: block; font-size: 32px; font-weight: bold; color: var(--accent); }
+        
         .table-card { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; padding: 20px; color: #7f8c8d; font-size: 13px; text-align: center; }
-        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f1f1; font-weight: 500; }
+        th { background: #f8f9fa; padding: 18px; color: #7f8c8d; font-size: 13px; text-align: center; border-bottom: 1px solid #eee; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f1f1; font-weight: 500; font-size: 14px; }
         .badge { padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: bold; }
         .present { background: #e8f5e9; color: #2e7d32; } .absent { background: #ffebee; color: #c62828; }
         
-        /* تصميم شاشة حماية المدير */
-        #adminAuthOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a237e; z-index: 5000; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
-        .auth-card { background: white; padding: 40px; border-radius: 30px; color: #333; width: 90%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        /* شاشة القفل ببراند منضبط */
+        #adminAuthOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--accent); z-index: 5000; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .auth-card { background: white; padding: 40px; border-radius: 30px; width: 90%; max-width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .auth-card i { font-size: 50px; color: var(--accent); margin-bottom: 15px; }
+        .auth-card h2 { margin: 0; color: var(--accent); font-size: 24px; }
+        .auth-card p { color: #666; margin: 5px 0 25px; font-size: 14px; }
 
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; justify-content:center; align-items:center; }
         .modal-content { background:white; border-radius:25px; width:95%; max-width:900px; height: 85vh; overflow-y: auto; position: relative; }
         .modal-body { padding: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-        .set-section { background: #fafafa; padding: 15px; border-radius: 15px; border: 1px solid #eee; }
-        .set-section h4 { margin: 0 0 15px 0; color: var(--accent); border-bottom: 2px solid var(--primary); display: inline-block; }
-        .form-group { margin-bottom: 12px; text-align: right; }
-        .form-group label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Tajawal'; box-sizing: border-box; }
+        .set-section { background: #fafafa; padding: 18px; border-radius: 15px; border: 1px solid #eee; }
+        .set-section h4 { margin: 0 0 15px 0; color: var(--accent); border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 5px; }
+        .form-group { margin-bottom: 15px; text-align: right; }
+        .form-group label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: bold; color: #555; }
+        .form-group input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 10px; font-family: 'Tajawal'; font-size: 14px; box-sizing: border-box; outline: none; }
         
         .absentees-panel { background: #fff1f2; padding: 20px; border-radius: 20px; margin-bottom: 25px; border: 1px solid #fecdd3; display: none; }
     </style>
@@ -45,46 +57,52 @@
 
     <div id="adminAuthOverlay">
         <div class="auth-card">
-            <i class="fas fa-shield-alt" style="font-size: 50px; color: #1a237e; margin-bottom: 20px;"></i>
-            <h2>دخول المدير</h2>
-            <p>يرجى إدخال كلمة مرور الإدارة للمتابعة</p>
-            <input type="password" id="adminPassInput" placeholder="كلمة المرور" style="width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #ddd; text-align: center; font-size: 20px; margin-bottom: 20px; outline: none;">
-            <button class="btn" style="background: #1a237e; width: 100%; justify-content: center;" onclick="checkAdminAccess()">فتح اللوحة</button>
-            <p id="authError" style="color: red; margin-top: 10px; display: none;">❌ كلمة المرور غير صحيحة!</p>
+            <i class="fas fa-fingerprint"></i>
+            <h2>منضبط</h2>
+            <p>التزامك.. في بصمتك</p>
+            <div class="form-group">
+                <input type="password" id="adminPassInput" placeholder="كلمة مرور الإدارة" style="text-align: center; font-size: 18px; letter-spacing: 2px;">
+            </div>
+            <button class="btn" style="background: var(--accent); width: 100%; justify-content: center;" onclick="checkAdminAccess()">دخول للوحة التحكم</button>
+            <p id="authError" style="color: var(--danger); margin-top: 15px; display: none; font-weight: bold;">❌ كلمة المرور غير صحيحة!</p>
         </div>
     </div>
 
     <div id="adminMainContent" style="display: none;">
         <div class="header">
-            <h1 id="mainDashboardTitle">لوحة إدارة الموظفين</h1>
-            <div id="clock" style="font-size: 14px; opacity: 0.8; margin-top: 10px;"></div>
+            <div class="branding-title">
+                <i class="fas fa-fingerprint" style="font-size: 35px;"></i>
+                <h1 id="mainDashboardTitle">منضبط</h1>
+            </div>
+            <p class="branding-tagline">التزامك.. في بصمتك | نظام الحضور الذكي</p>
+            <div id="clock" style="font-size: 14px; opacity: 0.8; margin-top: 15px;"></div>
         </div>
 
         <div class="container">
             <div class="action-bar">
-                <a href="links.html" class="btn" style="background:#34495e"><i class="fas fa-link"></i> إدارة الموظفين والروابط</a>
-                <a href="reports.html" class="btn" style="background:#8e44ad"><i class="fas fa-file-invoice"></i> تقارير الأداء</a>
-                <button class="btn" style="background:#607d8b" onclick="toggleM(true)"><i class="fas fa-cog"></i> الإعدادات</button>
-                <button class="btn" style="background:#e67e22" onclick="location.reload()"><i class="fas fa-sync"></i> تحديث الحالة</button>
+                <a href="links.html" class="btn" style="background:#34495e"><i class="fas fa-id-badge"></i> الموظفين والروابط</a>
+                <a href="reports.html" class="btn" style="background:#8e44ad"><i class="fas fa-file-chart-line"></i> تقارير الأداء</a>
+                <button class="btn" style="background:#607d8b" onclick="toggleM(true)"><i class="fas fa-sliders-h"></i> إعدادات النظام</button>
+                <button class="btn" style="background:#e67e22" onclick="location.reload()"><i class="fas fa-sync-alt"></i> تحديث الحالة</button>
             </div>
 
             <div id="absentAlertPanel" class="absentees-panel">
                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <h4 style="margin:0; color:#be123c;"><i class="fas fa-exclamation-triangle"></i> موظفون لم يسجلوا حضوراً: <span id="absentCount">0</span></h4>
-                    <button class="btn" style="background:#be123c; font-size:12px;" onclick="sendBulkAbsentMsg()"><i class="fab fa-whatsapp"></i> إرسال تذكير غياب جماعي</button>
+                    <h4 style="margin:0; color:#be123c;"><i class="fas fa-user-clock"></i> موظفون لم يبصموا حتى الآن: <span id="absentCount">0</span></h4>
+                    <button class="btn" style="background:#be123c; font-size:12px;" onclick="sendBulkAbsentMsg()"><i class="fab fa-whatsapp"></i> إرسال تذكير غياب</button>
                 </div>
                 <div id="absentNames" style="margin-top:10px; font-size:13px; color:#9f1239;"></div>
             </div>
 
             <div class="stats-grid">
-                <div class="stat-card">إجمالي الموظفين <span class="val" id="totalT">0</span></div>
-                <div class="stat-card">حاضرون الآن <span class="val" id="presentT" style="color:#2ecc71">0</span></div>
-                <div class="stat-card">غائبون <span class="val" id="absentT" style="color:#e74c3c">0</span></div>
+                <div class="stat-card"><span class="label">إجمالي الموظفين</span><span class="val" id="totalT">0</span></div>
+                <div class="stat-card"><span class="label">حاضرون الآن</span><span class="val" id="presentT" style="color:var(--success)">0</span></div>
+                <div class="stat-card"><span class="label">غائبون</span><span class="val" id="absentT" style="color:var(--danger)">0</span></div>
             </div>
 
             <div class="table-card">
                 <table>
-                    <thead><tr><th>الموظف</th><th>وقت الحضور</th><th>وقت الانصراف</th><th>حالة الحضور</th></tr></thead>
+                    <thead><tr><th>الموظف</th><th>وقت الحضور</th><th>وقت الانصراف</th><th>الحالة</th></tr></thead>
                     <tbody id="adminBody"></tbody>
                 </table>
             </div>
@@ -94,39 +112,39 @@
     <div id="setModal" class="modal">
         <div class="modal-content">
             <div style="padding:20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
-                <h3><i class="fas fa-tools"></i> خيارات وإعدادات الموظفين</h3>
-                <i class="fas fa-times" style="cursor:pointer" onclick="toggleM(false)"></i>
+                <h3><i class="fas fa-cogs"></i> إعدادات نظام "منضبط"</h3>
+                <i class="fas fa-times" style="cursor:pointer; color: #999;" onclick="toggleM(false)"></i>
             </div>
             <div class="modal-body">
                 <div class="set-section">
                     <h4>بيانات المجمع والمدير</h4>
-                    <div class="form-group"><label>اسم المدرسة / المنشأة:</label><input type="text" id="s_name"></div>
-                    <div class="form-group"><label>مدير المدرسة:</label><input type="text" id="s_mgr"></div>
-                    <div class="form-group"><label>كلمة مرور لوحة الإدارة:</label><input type="text" id="s_admin_pass" placeholder="كلمة السر الحالية"></div>
+                    <div class="form-group"><label>اسم المنشأة:</label><input type="text" id="s_name"></div>
+                    <div class="form-group"><label>اسم المدير:</label><input type="text" id="s_mgr"></div>
+                    <div class="form-group"><label>كلمة مرور المدير:</label><input type="text" id="s_admin_pass" placeholder="كلمة دخول اللوحة"></div>
                 </div>
 
                 <div class="set-section">
-                    <h4>نطاق الموقع الجغرافي</h4>
+                    <h4>نطاق التبصيم (GPS)</h4>
                     <div class="form-group"><label>خط العرض (Latitude):</label><input type="text" id="s_lat"></div>
                     <div class="form-group"><label>خط الطول (Longitude):</label><input type="text" id="s_lng"></div>
-                    <div class="form-group"><label>النطاق بالمتر:</label><input type="number" id="s_range"></div>
+                    <div class="form-group"><label>نطاق التبصيم بالمتر:</label><input type="number" id="s_range"></div>
                 </div>
 
                 <div class="set-section">
-                    <h4>مواعيد الدوام الرسمي</h4>
-                    <div class="form-group"><label>الحضور الرسمي:</label><input type="time" id="s_in"></div>
-                    <div class="form-group"><label>الانصراف الرسمي:</label><input type="time" id="s_out"></div>
+                    <h4>مواعيد الدوام</h4>
+                    <div class="form-group"><label>بداية الحضور:</label><input type="time" id="s_in"></div>
+                    <div class="form-group"><label>نهاية الدوام:</label><input type="time" id="s_out"></div>
                 </div>
                 
                 <div class="set-section">
-                    <h4>الرسائل والقوالب</h4>
-                    <div class="form-group"><label>رسالة الغياب الجماعية:</label>
-                        <textarea id="m_abs" rows="3"></textarea>
+                    <h4>قوالب رسائل الموظفين</h4>
+                    <div class="form-group"><label>نص رسالة تذكير الغياب:</label>
+                        <textarea id="m_abs" rows="3" placeholder="مثال: نرجو منكم تسجيل الحضور في نظام منضبط فوراً.."></textarea>
                     </div>
                 </div>
             </div>
             <div style="padding:20px; border-top:1px solid #eee; text-align:center;">
-                <button class="btn" style="background:var(--success); width:200px; justify-content:center; margin:auto;" onclick="saveSet()">حفظ الإعدادات</button>
+                <button class="btn" style="background:var(--success); width:220px; justify-content:center; margin:auto;" onclick="saveSet()">حفظ الإعدادات والتغييرات</button>
             </div>
         </div>
     </div>
@@ -135,11 +153,11 @@
         const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(config); const db = firebase.database();
         let absentList = [];
-        let globalAdminPass = "1234"; // كلمة مرور افتراضية إذا كانت قاعدة البيانات فارغة
+        let globalAdminPass = "1234";
 
         function toggleM(s) { document.getElementById('setModal').style.display = s?'flex':'none'; }
 
-        // التحقق من صلاحية الدخول
+        // التحقق من صلاحية المدير
         function checkAdminAccess() {
             const input = document.getElementById('adminPassInput').value;
             if (input === globalAdminPass) {
@@ -148,6 +166,7 @@
                 loadAdminData();
             } else {
                 document.getElementById('authError').style.display = 'block';
+                document.getElementById('adminPassInput').value = "";
             }
         }
 
@@ -161,9 +180,9 @@
                 s_lat: document.getElementById('s_lat').value,
                 s_lng: document.getElementById('s_lng').value,
                 s_range: document.getElementById('s_range').value,
-                s_admin_pass: document.getElementById('s_admin_pass').value // حفظ كلمة سر المدير
+                s_admin_pass: document.getElementById('s_admin_pass').value
             };
-            db.ref('settings/all').set(data).then(() => { alert("✅ تم تحديث الإعدادات"); toggleM(false); });
+            db.ref('settings/all').set(data).then(() => { alert("✅ تم تحديث إعدادات نظام منضبط بنجاح"); toggleM(false); });
         }
 
         db.ref('settings/all').on('value', s => {
@@ -178,9 +197,11 @@
                 document.getElementById('s_lng').value = d.s_lng || "";
                 document.getElementById('s_range').value = d.s_range || 150;
                 document.getElementById('s_admin_pass').value = d.s_admin_pass || "1234";
+                globalAdminPass = d.s_admin_pass || "1234";
                 
-                globalAdminPass = d.s_admin_pass || "1234"; // تحديث كلمة السر محلياً
-                document.getElementById('mainDashboardTitle').innerText = "لوحة إدارة الموظفين - " + (d.s_name || "");
+                // تحديث العنوان العلوي بناءً على اسم المدرسة
+                const name = d.s_name || "منضبط";
+                document.getElementById('mainDashboardTitle').innerText = "منضبط - " + name;
             }
         });
 
@@ -205,15 +226,25 @@
                     document.getElementById('presentT').innerText = p;
                     document.getElementById('absentT').innerText = Object.keys(ts).length - p;
                     const panel = document.getElementById('absentAlertPanel');
-                    if(absentList.length > 0) { panel.style.display = 'block'; document.getElementById('absentCount').innerText = absentList.length; document.getElementById('absentNames').innerText = "الغائبون: " + absentList.map(a => a.name).join('، '); }
-                    else { panel.style.display = 'none'; }
+                    if(absentList.length > 0) {
+                        panel.style.display = 'block';
+                        document.getElementById('absentCount').innerText = absentList.length;
+                        document.getElementById('absentNames').innerText = "الموظفون الغائبون: " + absentList.map(a => a.name).join('، ');
+                    } else { panel.style.display = 'none'; }
                 });
             });
         }
 
         async function sendBulkAbsentMsg() {
-            const msgTemplate = document.getElementById('m_abs').value || "يرجى تسجيل الحضور..";
-            for (const t of absentList) { if(t.phone) { window.open(`https://wa.me/${t.phone}?text=${encodeURIComponent(msgTemplate)}`, '_blank'); await new Promise(r => setTimeout(r, 1000)); } }
+            const msgTemplate = document.getElementById('m_abs').value || "يرجى تسجيل الحضور في نظام منضبط..";
+            if(confirm(`إرسال تذكير واتساب لـ ${absentList.length} موظف غائب؟`)) {
+                for (const t of absentList) {
+                    if(t.phone) {
+                        window.open(`https://wa.me/${t.phone}?text=${encodeURIComponent(msgTemplate)}`, '_blank');
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
+                }
+            }
         }
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString('ar-SA'); }, 1000);
     </script>

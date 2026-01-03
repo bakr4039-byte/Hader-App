@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاضر - تسجيل البصمة</title>
+    <title>منضبط - تسجيل الحضور</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3f51b5">
+    <meta name="theme-color" content="#1a237e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2913/2913133.png">
@@ -21,37 +21,52 @@
 
     <style>
         body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        .branding-header { text-align: center; margin-bottom: 20px; }
+        .branding-header h1 { margin: 0; color: #1a237e; font-size: 32px; letter-spacing: -1px; }
+        .branding-header p { margin: 5px 0 0; color: #555; font-size: 14px; font-weight: bold; }
+        
         .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; }
         .work-hours { background: #fff; width: 100%; max-width: 400px; padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-around; border: 1px solid #e0e0e0; font-size: 13px; }
         .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; transition: 0.3s; }
         .in-range { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
         .out-range { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
-        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        
+        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; box-sizing: border-box; }
         #map { height: 180px; width: 100%; border-radius: 20px; margin-bottom: 10px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
         .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; }
 
-        /* تصميم واجهة طلب كلمة المرور */
+        /* شاشة القفل */
         #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        .pass-input { width: 100%; max-width: 300px; padding: 15px; border-radius: 12px; border: 2px solid #ddd; text-align: center; font-size: 24px; letter-spacing: 5px; margin-bottom: 20px; font-family: sans-serif; outline: none; transition: 0.3s; }
-        .pass-input:focus { border-color: #3f51b5; box-shadow: 0 0 10px rgba(63, 81, 181, 0.2); }
+        .pass-input { width: 100%; max-width: 300px; padding: 15px; border-radius: 12px; border: 2px solid #ddd; text-align: center; font-size: 24px; letter-spacing: 5px; margin-bottom: 20px; outline: none; transition: 0.3s; }
+        .pass-input:focus { border-color: #1a237e; box-shadow: 0 0 10px rgba(26, 35, 126, 0.2); }
     </style>
 </head>
 <body>
 
     <div id="authOverlay">
         <div class="container" style="max-width: 350px;">
-            <i class="fas fa-user-lock" style="font-size: 50px; color: #1a237e; margin-bottom: 20px;"></i>
-            <h2 id="welcomeMsg">جاري التحقق...</h2>
-            <p style="color: #666; font-size: 14px;">يرجى إدخال كلمة المرور للمتابعة</p>
+            <div class="branding-header">
+                <i class="fas fa-fingerprint" style="font-size: 60px; color: #1a237e; margin-bottom: 10px;"></i>
+                <h1>منضبط</h1>
+                <p>التزامك.. في بصمتك</p>
+            </div>
+            <h2 id="welcomeMsg" style="margin-bottom: 5px;">جاري التحقق...</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 20px;">يرجى إدخال كلمة المرور للمتابعة</p>
             <input type="password" id="passInput" class="pass-input" placeholder="****" inputmode="numeric">
             <button class="btn" style="background: #1a237e;" onclick="verifyPassword()">دخول للنظام</button>
         </div>
     </div>
 
     <div id="App" style="display: none; width: 100%; max-width: 400px;">
+        <div class="branding-header" style="margin-bottom: 15px;">
+            <h1 style="font-size: 24px;">منضبط</h1>
+            <p style="font-size: 11px;">نظام الحضور الذكي</p>
+        </div>
+
         <div class="header-info" id="topBar">
-            <h3 id="schoolDisplay" style="margin:0">ثانوية الصحافة</h3>
+            <h3 id="schoolDisplay" style="margin:0">جاري التحميل...</h3>
             <span style="font-size:16px; font-weight:bold; color:#3498db;" id="liveDay">---</span><br>
             <small id="liveTime">00:00:00</small>
         </div>
@@ -65,14 +80,14 @@
         
         <div id="map"></div>
         <div class="container">
-            <h2 id="TN" style="margin-top:0; color:#2c3e50;"></h2>
+            <h2 id="TN" style="margin-top:0; color:#2c3e50; font-size: 20px;"></h2>
             <button class="btn btn-in" onclick="H('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
             <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
     </div>
 
     <script>
-        // تسجيل الـ Service Worker لتفعيل تطبيق الجوال
+        // تسجيل تطبيق الجوال
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
@@ -83,18 +98,17 @@
         firebase.initializeApp(conf); const db = firebase.database();
         
         const ID = new URLSearchParams(window.location.search).get('id');
-        let SLAT = 24.8001897, SLNG = 46.6449937, DIST = 150;
-        let M, UM, schoolCircle, correctPass = "", tName = "";
+        let SLAT, SLNG, DIST, correctPass, tName, M, UM, schoolCircle;
 
-        // خيارات تحديد الموقع المحسنة لأجهزة iPhone
-        const geoOptions = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+        // خيارات GPS المحسنة لـ iPhone
+        const geoOptions = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
 
-        // 1. جلب بيانات المعلم والتحقق من كلمة السر
+        // 1. جلب بيانات الموظف
         if (ID) {
             db.ref('teachers/' + ID).once('value').then(s => {
                 if (s.exists()) {
                     tName = s.val().name;
-                    correctPass = s.val().password; // جلب كلمة السر المخزنة
+                    correctPass = s.val().password;
                     document.getElementById('welcomeMsg').innerText = "مرحباً: " + tName;
                 } else {
                     document.body.innerHTML = "<div style='text-align:center;margin-top:100px;'><h2>عفواً، الرابط غير صالح</h2></div>";
@@ -102,37 +116,65 @@
             });
         }
 
-        // 2. وظيفة التحقق من كلمة السر المضافة
+        // 2. معرّف الجهاز (ربط الجوال)
+        function getDeviceID() {
+            let id = localStorage.getItem('mundabit_device_id');
+            if (!id) {
+                id = 'DEV-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+                localStorage.setItem('mundabit_device_id', id);
+            }
+            return id;
+        }
+
+        // 3. التحقق من كلمة السر والجوال
         function verifyPassword() {
             const input = document.getElementById('passInput').value;
+            const currentDevID = getDeviceID();
+
             if (input === correctPass) {
-                document.getElementById('authOverlay').style.display = 'none';
-                document.getElementById('App').style.display = 'block';
-                document.getElementById('TN').innerText = "أهلاً: " + tName;
-                loadSettings(); // تحميل إعدادات المدرسة
-                initM(); // تفعيل الخريطة
-                startWatching(); // مراقبة الموقع
-                setInterval(updateClock, 1000); // تفعيل الساعة
+                db.ref('teachers/' + ID).once('value').then(snap => {
+                    let linkedID = snap.val().deviceId;
+                    if (!linkedID || linkedID === "") {
+                        // ربط الجهاز لأول مرة
+                        db.ref('teachers/' + ID).update({ deviceId: currentDevID });
+                        startApp();
+                    } else if (linkedID === currentDevID) {
+                        startApp();
+                    } else {
+                        alert("⛔ عذراً، لا يمكنك التبصيم إلا من جهازك المسجل مسبقاً.");
+                    }
+                });
             } else {
-                alert("❌ كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.");
+                alert("❌ كلمة المرور غير صحيحة!");
                 document.getElementById('passInput').value = "";
             }
+        }
+
+        function startApp() {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('App').style.display = 'block';
+            document.getElementById('TN').innerText = tName;
+            loadSettings();
+            initM();
+            startWatching();
+            setInterval(updateClock, 1000);
         }
 
         function loadSettings() {
             db.ref('settings/all').on('value', s => {
                 if(s.exists()){
                     const d = s.val();
-                    document.getElementById('schoolDisplay').innerText = d.s_name || "ثانوية الصحافة";
+                    document.getElementById('schoolDisplay').innerText = d.s_name || "المنشأة";
                     document.getElementById('schIn').innerText = d.s_in || "--:--";
                     document.getElementById('schOut').innerText = d.s_out || "--:--";
-                    SLAT = parseFloat(d.s_lat) || 24.8001897;
-                    SLNG = parseFloat(d.s_lng) || 46.6449937;
+                    SLAT = parseFloat(d.s_lat);
+                    SLNG = parseFloat(d.s_lng);
                     DIST = parseInt(d.s_range) || 150;
+                    
                     if (M) {
                         M.setView([SLAT, SLNG], 17);
                         if (schoolCircle) M.removeLayer(schoolCircle);
-                        schoolCircle = L.circle([SLAT, SLNG], { radius: DIST, color: '#3498db', fillOpacity: 0.1 }).addTo(M);
+                        schoolCircle = L.circle([SLAT, SLNG], { radius: DIST, color: '#1a237e', fillOpacity: 0.1 }).addTo(M);
                     }
                 }
             });
@@ -146,23 +188,24 @@
         }
 
         function initM() {
-            if (!M) {
+            if (!M && SLAT) {
                 M = L.map('map').setView([SLAT, SLNG], 17);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(M);
-                schoolCircle = L.circle([SLAT, SLNG], { radius: DIST, color: '#3498db', fillOpacity: 0.1 }).addTo(M);
+                schoolCircle = L.circle([SLAT, SLNG], { radius: DIST, color: '#1a237e', fillOpacity: 0.1 }).addTo(M);
             }
         }
 
         function startWatching() {
             navigator.geolocation.watchPosition(p => {
-                const currentLat = p.coords.latitude;
-                const currentLng = p.coords.longitude;
-                const d = getD(currentLat, currentLng, SLAT, SLNG);
+                const lat = p.coords.latitude, lng = p.coords.longitude;
+                const d = getD(lat, lng, SLAT, SLNG);
                 const stat = document.getElementById('rangeStatus');
+                
                 if (UM) M.removeLayer(UM); 
-                UM = L.circleMarker([currentLat, currentLng], {color:'red', radius:8}).addTo(M);
+                UM = L.circleMarker([lat, lng], {color:'red', radius:8}).addTo(M);
+                
                 if (d <= DIST) { 
-                    stat.innerText = "أنت داخل نطاق المدرسة ✅"; 
+                    stat.innerText = "أنت داخل نطاق العمل ✅"; 
                     stat.className = "range-badge in-range"; 
                 } else { 
                     stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; 
@@ -170,8 +213,8 @@
                 }
             }, (err) => {
                 const stat = document.getElementById('rangeStatus');
-                if(err.code === 1) stat.innerText = "يرجى تفعيل صلاحية الموقع من الإعدادات ⚠️";
-                else stat.innerText = "جاري البحث عن إشارة GPS دقيقة... ⏳";
+                if(err.code === 1) stat.innerText = "يرجى السماح بالوصول للموقع ⚠️";
+                else stat.innerText = "جاري البحث عن إشارة GPS... ⏳";
             }, geoOptions);
         }
 
@@ -186,11 +229,11 @@
                         name: tName, 
                         [t === 'حضور' ? 'checkIn' : 'checkOut']: time, 
                         inStatus: "حاضر" 
-                    }).then(() => alert(`تم تسجيل ${t} بنجاح في تمام الساعة ${time}`));
+                    }).then(() => alert(`✅ تم تسجيل ${t} بنجاح الساعة ${time}`));
                 } else { 
-                    alert("لا يمكن التبصيم لأنك خارج النطاق الجغرافي للمدرسة!"); 
+                    alert("❌ لا يمكنك التبصيم، أنت خارج النطاق الجغرافي للمنشأة!"); 
                 }
-            }, (err) => alert("خطأ في الموقع، تأكد من تفعيل الـ GPS"), geoOptions);
+            }, (err) => alert("خطأ في تحديد الموقع، تأكد من تشغيل الـ GPS"), geoOptions);
         }
 
         function getD(la1, lo1, la2, lo2) {
