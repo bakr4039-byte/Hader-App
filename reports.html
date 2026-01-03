@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تقارير الأداء - ثانوية الصحافة</title>
+    <title>تقارير أداء الموظفين - ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -16,67 +16,143 @@
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         th { background: #1e293b; color: white; padding: 15px; font-size: 13px; }
         td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 500; }
-        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; }
+        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; transition: 0.3s; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
     </style>
 </head>
 <body>
     <div class="top-nav">
-        <a href="admin.html" style="color:white; text-decoration:none;"><i class="fas fa-arrow-right"></i> العودة</a>
-        <h3 id="repSchool" style="margin:0"></h3>
-        <span>تقرير الأداء</span>
+        <a href="admin.html" style="color:white; text-decoration:none;"><i class="fas fa-arrow-right"></i> العودة للوحة الإدارة</a>
+        <h3 id="repSchool" style="margin:0">جاري التحميل...</h3>
+        <span>تقرير أداء الموظفين</span>
     </div>
+
     <div class="container">
         <div class="filter-card">
-            <input type="date" id="dateF"> إلى <input type="date" id="dateT">
-            <button class="btn" style="background:#3f51b5; margin:0 10px;" onclick="loadR()">تحليل</button>
-            <button class="btn" style="background:#27ae60" onclick="exportEX()">تصدير Excel</button>
+            <label style="font-weight: bold; margin-left: 10px;">الفترة من:</label>
+            <input type="date" id="dateF" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+            <label style="font-weight: bold; margin: 0 10px;">إلى:</label>
+            <input type="date" id="dateT" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+            
+            <button class="btn" style="background:#3f51b5; margin:0 10px;" onclick="loadR()">
+                <i class="fas fa-chart-line"></i> تحليل البيانات
+            </button>
+            <button class="btn" style="background:#27ae60" onclick="exportEX()">
+                <i class="fas fa-file-excel"></i> تصدير Excel
+            </button>
         </div>
+
         <table id="rTable">
-            <thead><tr><th>المعلم</th><th>الغياب</th><th>أيام التأخير</th><th>دقائق التأخير</th><th>خروج مبكر</th><th>بدون انصراف</th></tr></thead>
-            <tbody id="rBody"></tbody>
+            <thead>
+                <tr>
+                    <th>اسم الموظف</th>
+                    <th>أيام الغياب</th>
+                    <th>أيام التأخير</th>
+                    <th>إجمالي دقائق التأخير</th>
+                    <th>خروج مبكر (مرات)</th>
+                    <th>تبصيم ناقص</th>
+                </tr>
+            </thead>
+            <tbody id="rBody">
+                <tr><td colspan="6" style="padding: 30px; color: #999;">يرجى اختيار الفترة الزمنية ثم الضغط على تحليل البيانات</td></tr>
+            </tbody>
         </table>
     </div>
+
     <script>
+        // إعدادات Firebase
         const conf = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(conf); const db = firebase.database();
+        
         let sIn = "07:00", sOut = "13:00";
 
+        // جلب الإعدادات الموحدة من لوحة الإدارة
         db.ref('settings/all').on('value', s => {
             if(s.exists()){
                 const d = s.val();
-                document.getElementById('repSchool').innerText = d.school_name;
-                sIn = d.official_in; sOut = d.official_out;
+                document.getElementById('repSchool').innerText = d.s_name || "ثانوية الصحافة";
+                sIn = d.s_in || "07:00"; 
+                sOut = d.s_out || "13:00";
             }
         });
 
         async function loadR() {
-            const start = new Date(document.getElementById('dateF').value), end = new Date(document.getElementById('dateT').value);
-            const tsS = await db.ref('teachers').once('value'); const ts = tsS.val() || {};
-            let stats = {}; Object.keys(ts).forEach(id => stats[id] = { n:ts[id].name, a:0, ld:0, lm:0, em:0, no:0 });
+            const dateFrom = document.getElementById('dateF').value;
+            const dateTo = document.getElementById('dateT').value;
 
-            for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) {
+            if(!dateFrom || !dateTo) return alert("يرجى تحديد التاريخ أولاً");
+
+            const start = new Date(dateFrom); 
+            const end = new Date(dateTo);
+            
+            // جلب قائمة الموظفين
+            const tsS = await db.ref('teachers').once('value'); 
+            const ts = tsS.val() || {};
+            
+            let stats = {}; 
+            Object.keys(ts).forEach(id => stats[id] = { n: ts[id].name, a:0, ld:0, lm:0, em:0, no:0 });
+
+            // حلقة تكرارية على الأيام المختارة
+            for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dk = d.toLocaleDateString('en-GB').replace(/\//g, '-');
-                const adS = await db.ref('attendance/'+dk).once('value'); const ad = adS.val() || {};
+                const adS = await db.ref('attendance/' + dk).once('value'); 
+                const ad = adS.val() || {};
+                
                 Object.keys(stats).forEach(id => {
-                    const r = ad[id]; if(!r) stats[id].a++;
-                    else {
-                        const l = diff(sIn, r.checkIn); if(l>0){ stats[id].ld++; stats[id].lm+=l; }
-                        const e = r.checkOut ? diff(r.checkOut, sOut) : 0; if(e>0) stats[id].em+=e;
-                        if(r.checkIn && !r.checkOut) stats[id].no++;
+                    const record = ad[id]; 
+                    if(!record) {
+                        stats[id].a++; // احتساب غياب
+                    } else {
+                        // حساب التأخير في الحضور
+                        const lateMinutes = diff(sIn, record.checkIn); 
+                        if(lateMinutes > 0){ 
+                            stats[id].ld++; 
+                            stats[id].lm += lateMinutes; 
+                        }
+                        
+                        // حساب الخروج المبكر
+                        const earlyMinutes = record.checkOut ? diff(record.checkOut, sOut) : 0; 
+                        if(earlyMinutes > 0) stats[id].em++;
+                        
+                        // احتساب التبصيم الناقص (حضر ولم ينصرف)
+                        if(record.checkIn && (!record.checkOut || record.checkOut === '--')) stats[id].no++;
                     }
                 });
             }
-            const body = document.getElementById('rBody'); body.innerHTML = "";
+
+            // عرض النتائج في الجدول
+            const body = document.getElementById('rBody'); 
+            body.innerHTML = "";
+            
             Object.values(stats).forEach(s => {
-                body.innerHTML += `<tr><td>${s.n}</td><td style="color:red">${s.a}</td><td>${s.ld}</td><td>${s.lm}</td><td>${s.em}</td><td>${s.no}</td></tr>`;
+                body.innerHTML += `
+                    <tr>
+                        <td>${s.n}</td>
+                        <td style="color:${s.a > 0 ? 'red' : 'inherit'}">${s.a}</td>
+                        <td>${s.ld}</td>
+                        <td>${s.lm} دقيقة</td>
+                        <td>${s.em}</td>
+                        <td style="color:orange">${s.no}</td>
+                    </tr>`;
             });
         }
+
+        // دالة حساب فارق الدقائق بين وقتين
         function diff(t1, t2) {
-            if(!t1 || !t2 || t2==='--') return 0;
-            const [h1, m1] = t1.split(':').map(Number); const [h2, m2] = t2.split(':').map(Number);
-            const d = (h2*60+m2)-(h1*60+m1); return d>0?d:0;
+            if(!t1 || !t2 || t2 === '--') return 0;
+            const [h1, m1] = t1.split(':').map(Number); 
+            const [h2, m2] = t2.split(':').map(Number);
+            const totalMinutes1 = h1 * 60 + m1;
+            const totalMinutes2 = h2 * 60 + m2;
+            const difference = totalMinutes2 - totalMinutes1;
+            return difference > 0 ? difference : 0;
         }
-        function exportEX() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('rTable')), 'تقرير.xlsx'); }
+
+        // دالة تصدير الملف إلى Excel
+        function exportEX() { 
+            const fileName = `تقرير_أداء_${document.getElementById('repSchool').innerText}.xlsx`;
+            XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('rTable')), fileName); 
+        }
     </script>
 </body>
 </html>
