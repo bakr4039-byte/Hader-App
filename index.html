@@ -23,12 +23,12 @@
         body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; }
         .work-hours { background: #fff; width: 100%; max-width: 400px; padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-around; border: 1px solid #e0e0e0; font-size: 13px; }
-        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; transition: 0.3s; }
         .in-range { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
         .out-range { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
         .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         #map { height: 180px; width: 100%; border-radius: 20px; margin-bottom: 10px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; }
         .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; }
     </style>
 </head>
@@ -40,8 +40,8 @@
     </div>
     
     <div class="work-hours">
-        <div>الحضور: <span id="schIn">--:--</span></div>
-        <div>الانصراف: <span id="schOut">--:--</span></div>
+        <div><i class="fas fa-clock"></i> الحضور: <span id="schIn">--:--</span></div>
+        <div><i class="fas fa-sign-out-alt"></i> الانصراف: <span id="schOut">--:--</span></div>
     </div>
     
     <div id="rangeStatus" class="range-badge out-range">جاري تحديد الموقع الجغرافي...</div>
@@ -49,7 +49,7 @@
     <div id="App" style="display: none; width: 100%; max-width: 400px;">
         <div id="map"></div>
         <div class="container">
-            <h2 id="TN" style="margin-top:0"></h2>
+            <h2 id="TN" style="margin-top:0; color:#2c3e50;"></h2>
             <button class="btn btn-in" onclick="H('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
             <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
@@ -60,7 +60,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('PWA Registered Successfully'))
+                    .then(reg => console.log('PWA Registered'))
                     .catch(err => console.log('PWA Registration Failed', err));
             });
         }
@@ -72,6 +72,13 @@
         let M, UM, schoolCircle;
 
         const ID = new URLSearchParams(window.location.search).get('id');
+
+        // خيارات تحديد الموقع المحسنة لأجهزة iPhone (Precise Location)
+        const geoOptions = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        };
 
         db.ref('settings/all').on('value', s => {
             if(s.exists()){
@@ -103,9 +110,9 @@
             db.ref('teachers/' + ID).once('value').then(s => {
                 if (s.exists()) {
                     document.getElementById('App').style.display = 'block';
-                    document.getElementById('TN').innerText = s.val().name;
+                    document.getElementById('TN').innerText = "مرحباً: " + s.val().name;
                     initM(); startWatching();
-                } else { document.body.innerHTML = "<h2>عفواً، الرابط غير صالح أو تم إلغاؤه</h2>"; }
+                } else { document.body.innerHTML = "<div style='text-align:center;margin-top:50px;'><h2>عفواً، الرابط غير صالح</h2></div>"; }
             });
         }
 
@@ -128,13 +135,17 @@
                 UM = L.circleMarker([currentLat, currentLng], {color:'red', radius:8}).addTo(M);
                 
                 if (d <= DIST) { 
-                    stat.innerText = "داخل النطاق المسموح ✅"; 
+                    stat.innerText = "أنت داخل نطاق المدرسة ✅"; 
                     stat.className = "range-badge in-range"; 
                 } else { 
                     stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; 
                     stat.className = "range-badge out-range"; 
                 }
-            }, null, { enableHighAccuracy: true });
+            }, (err) => {
+                const stat = document.getElementById('rangeStatus');
+                if(err.code === 1) stat.innerText = "يرجى تفعيل صلاحية الموقع من الإعدادات ⚠️";
+                else stat.innerText = "جاري البحث عن إشارة GPS دقيقة... ⏳";
+            }, geoOptions);
         }
 
         function H(t) {
@@ -145,14 +156,14 @@
                     const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
                     const dk = now.toLocaleDateString('en-GB').replace(/\//g, '-');
                     db.ref(`attendance/${dk}/${ID}`).update({ 
-                        name: document.getElementById('TN').innerText, 
+                        name: document.getElementById('TN').innerText.replace('مرحباً: ', ''), 
                         [t === 'حضور' ? 'checkIn' : 'checkOut']: time, 
                         inStatus: "حاضر" 
                     }).then(() => alert(`تم تسجيل ${t} بنجاح في تمام الساعة ${time}`));
                 } else { 
-                    alert("عذراً، لا يمكنك التبصيم لأنك خارج النطاق الجغرافي المحدد للمدرسة!"); 
+                    alert("لا يمكن التبصيم لأنك خارج النطاق الجغرافي للمدرسة!"); 
                 }
-            });
+            }, (err) => alert("خطأ في تحديد الموقع، تأكد من تشغيل الـ GPS"), geoOptions);
         }
 
         function getD(la1, lo1, la2, lo2) {
