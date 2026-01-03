@@ -18,7 +18,7 @@
         .in-range { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
         .out-range { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
         .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        #map { height: 180px; width: 100%; border-radius: 20px; margin-bottom: 10px; }
+        #map { height: 180px; width: 100%; border-radius: 20px; margin-bottom: 10px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; }
     </style>
@@ -33,7 +33,7 @@
         <div>الحضور: <span id="schIn">--:--</span></div>
         <div>الانصراف: <span id="schOut">--:--</span></div>
     </div>
-    <div id="rangeStatus" class="range-badge out-range">جاري تحديد الموقع...</div>
+    <div id="rangeStatus" class="range-badge out-range">جاري تحديد الموقع الجغرافي...</div>
     <div id="App" style="display: none; width: 100%; max-width: 400px;">
         <div id="map"></div>
         <div class="container">
@@ -42,20 +42,36 @@
             <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
     </div>
+
     <script>
         const conf = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(conf); const db = firebase.database();
+        
+        // متغيرات الموقع والمسافة (سيتم تحديثها من قاعدة البيانات)
         let SLAT = 24.8001897, SLNG = 46.6449937, DIST = 150;
+        let M, UM, schoolCircle;
+
         const ID = new URLSearchParams(window.location.search).get('id');
 
-        // جلب الإعدادات المحدثة
+        // جلب الإعدادات المحدثة (الموقع، المسافة، المواعيد)
         db.ref('settings/all').on('value', s => {
             if(s.exists()){
                 const d = s.val();
-                document.getElementById('schoolDisplay').innerText = d.school_name || "ثانوية الصحافة";
-                document.getElementById('schIn').innerText = d.official_in || "--:--";
-                document.getElementById('schOut').innerText = d.official_out || "--:--";
-                DIST = parseInt(d.range) || 150;
+                document.getElementById('schoolDisplay').innerText = d.s_name || "ثانوية الصحافة";
+                document.getElementById('schIn').innerText = d.s_in || "--:--";
+                document.getElementById('schOut').innerText = d.s_out || "--:--";
+                
+                // تحديث إحداثيات الموقع والمسافة من الإعدادات
+                SLAT = parseFloat(d.s_lat) || 24.8001897;
+                SLNG = parseFloat(d.s_lng) || 46.6449937;
+                DIST = parseInt(d.s_range) || 150;
+
+                // تحديث الخريطة إذا كانت محملة
+                if (M) {
+                    M.setView([SLAT, SLNG], 17);
+                    if (schoolCircle) M.removeLayer(schoolCircle);
+                    schoolCircle = L.circle([SLAT, SLNG], { radius: DIST, color: '#3498db', fillOpacity: 0.1 }).addTo(M);
+                }
             }
         });
 
@@ -72,24 +88,35 @@
                     document.getElementById('App').style.display = 'block';
                     document.getElementById('TN').innerText = s.val().name;
                     initM(); startWatching();
-                } else { document.body.innerHTML = "<h2>عفواً، الرابط غير صالح</h2>"; }
+                } else { document.body.innerHTML = "<h2>عفواً، الرابط غير صالح أو تم إلغاؤه</h2>"; }
             });
         }
 
-        let M, UM;
         function initM() {
-            M = L.map('map').setView([SLAT, SLNG], 17);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(M);
-            L.circle([SLAT, SLNG], { radius: DIST, color: '#3498db', fillOpacity: 0.1 }).addTo(M);
+            if (!M) {
+                M = L.map('map').setView([SLAT, SLNG], 17);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(M);
+                schoolCircle = L.circle([SLAT, SLNG], { radius: DIST, color: '#3498db', fillOpacity: 0.1 }).addTo(M);
+            }
         }
 
         function startWatching() {
             navigator.geolocation.watchPosition(p => {
-                const d = getD(p.coords.latitude, p.coords.longitude, SLAT, SLNG);
+                const currentLat = p.coords.latitude;
+                const currentLng = p.coords.longitude;
+                const d = getD(currentLat, currentLng, SLAT, SLNG);
                 const stat = document.getElementById('rangeStatus');
-                if (UM) M.removeLayer(UM); UM = L.circleMarker([p.coords.latitude, p.coords.longitude], {color:'red', radius:8}).addTo(M);
-                if (d <= DIST) { stat.innerText = "داخل النطاق المسموح ✅"; stat.className = "range-badge in-range"; }
-                else { stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; stat.className = "range-badge out-range"; }
+                
+                if (UM) M.removeLayer(UM); 
+                UM = L.circleMarker([currentLat, currentLng], {color:'red', radius:8}).addTo(M);
+                
+                if (d <= DIST) { 
+                    stat.innerText = "داخل النطاق المسموح ✅"; 
+                    stat.className = "range-badge in-range"; 
+                } else { 
+                    stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; 
+                    stat.className = "range-badge out-range"; 
+                }
             }, null, { enableHighAccuracy: true });
         }
 
@@ -97,19 +124,24 @@
             navigator.geolocation.getCurrentPosition(p => {
                 const d = getD(p.coords.latitude, p.coords.longitude, SLAT, SLNG);
                 if (d <= DIST) {
-                    const now = new Date(); const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+                    const now = new Date(); 
+                    const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
                     const dk = now.toLocaleDateString('en-GB').replace(/\//g, '-');
                     db.ref(`attendance/${dk}/${ID}`).update({ 
                         name: document.getElementById('TN').innerText, 
                         [t === 'حضور' ? 'checkIn' : 'checkOut']: time, 
                         inStatus: "حاضر" 
-                    }).then(() => alert(`تم تسجيل ${t} بنجاح`));
-                } else { alert("خارج النطاق!"); }
+                    }).then(() => alert(`تم تسجيل ${t} بنجاح في تمام الساعة ${time}`));
+                } else { 
+                    alert("عذراً، لا يمكنك التبصيم لأنك خارج النطاق الجغرافي المحدد للمدرسة!"); 
+                }
             });
         }
 
         function getD(la1, lo1, la2, lo2) {
-            const R = 6371e3; const dLa = (la2-la1)*Math.PI/180; const dLo = (lo2-lo1)*Math.PI/180;
+            const R = 6371e3; 
+            const dLa = (la2-la1)*Math.PI/180; 
+            const dLo = (lo2-lo1)*Math.PI/180;
             const a = Math.sin(dLa/2)**2 + Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }

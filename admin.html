@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --primary: #3f51b5; --accent: #1a237e; --bg: #f4f7f6; --danger: #e74c3c; }
+        :root { --primary: #3f51b5; --accent: #1a237e; --bg: #f4f7f6; --danger: #e74c3c; --success: #27ae60; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; }
         .header { background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 40px 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .container { max-width: 1100px; margin: -30px auto 50px; padding: 0 20px; }
@@ -25,7 +25,7 @@
         .badge { padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: bold; }
         .present { background: #e8f5e9; color: #2e7d32; } .absent { background: #ffebee; color: #c62828; }
         
-        /* نافذة الإعدادات الكبيرة */
+        /* نافذة الإعدادات الشاملة */
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; justify-content:center; align-items:center; }
         .modal-content { background:white; border-radius:25px; width:95%; max-width:900px; height: 85vh; overflow-y: auto; position: relative; }
         .modal-body { padding: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
@@ -35,7 +35,6 @@
         .form-group label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: bold; }
         .form-group input, textarea { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Tajawal'; box-sizing: border-box; }
         
-        /* قسم الغائبين السريع */
         .absentees-panel { background: #fff1f2; padding: 20px; border-radius: 20px; margin-bottom: 25px; border: 1px solid #fecdd3; display: none; }
     </style>
 </head>
@@ -78,7 +77,7 @@
     <div id="setModal" class="modal">
         <div class="modal-content">
             <div style="padding:20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
-                <h3><i class="fas fa-tools"></i> خيارات البرنامج والإعدادات</h3>
+                <h3><i class="fas fa-tools"></i> خيارات البرنامج والإعدادات المتقدمة</h3>
                 <i class="fas fa-times" style="cursor:pointer" onclick="toggleM(false)"></i>
             </div>
             <div class="modal-body">
@@ -87,15 +86,27 @@
                     <div class="form-group"><label>اسم المدرسة:</label><input type="text" id="s_name"></div>
                     <div class="form-group"><label>مدير المدرسة:</label><input type="text" id="s_mgr"></div>
                 </div>
+
+                <div class="set-section">
+                    <h4>نطاق الموقع الجغرافي</h4>
+                    <div class="form-group"><label>خط العرض (Latitude):</label><input type="text" id="s_lat" placeholder="مثال: 24.8001"></div>
+                    <div class="form-group"><label>خط الطول (Longitude):</label><input type="text" id="s_lng" placeholder="مثال: 46.6449"></div>
+                    <div class="form-group"><label>المسافة المسموحة (بالمتر):</label><input type="number" id="s_range" placeholder="150"></div>
+                    <button class="btn" style="background:var(--primary); width:100%; font-size:11px;" onclick="getCurrentLocation()">
+                        <i class="fas fa-map-marker-alt"></i> جلب إحداثيات موقعي الحالي
+                    </button>
+                </div>
+
                 <div class="set-section">
                     <h4>مواعيد الدوام</h4>
                     <div class="form-group"><label>الحضور الرسمي:</label><input type="time" id="s_in"></div>
                     <div class="form-group"><label>الانصراف الرسمي:</label><input type="time" id="s_out"></div>
                 </div>
+                
                 <div class="set-section">
-                    <h4>رسائل الواتساب الجماعية</h4>
+                    <h4>الرسائل الجماعية</h4>
                     <div class="form-group"><label>قالب رسالة الغياب:</label>
-                        <textarea id="m_abs" rows="3" placeholder="مثال: نرجو منكم سرعة تسجيل الحضور.."></textarea>
+                        <textarea id="m_abs" rows="3"></textarea>
                     </div>
                 </div>
             </div>
@@ -112,15 +123,29 @@
 
         function toggleM(s) { document.getElementById('setModal').style.display = s?'flex':'none'; }
 
+        // وظيفة جلب الموقع الحالي للمدير
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    document.getElementById('s_lat').value = position.coords.latitude;
+                    document.getElementById('s_lng').value = position.coords.longitude;
+                    alert("تم جلب الإحداثيات الحالية بنجاح ✅");
+                }, () => alert("يرجى تفعيل تصريح الموقع في المتصفح"));
+            }
+        }
+
         function saveSet() {
             const data = {
                 s_name: document.getElementById('s_name').value,
                 s_mgr: document.getElementById('s_mgr').value,
                 s_in: document.getElementById('s_in').value,
                 s_out: document.getElementById('s_out').value,
-                m_abs: document.getElementById('m_abs').value
+                m_abs: document.getElementById('m_abs').value,
+                s_lat: document.getElementById('s_lat').value, // حفظ خط العرض
+                s_lng: document.getElementById('s_lng').value, // حفظ خط الطول
+                s_range: document.getElementById('s_range').value // حفظ المسافة
             };
-            db.ref('settings/all').set(data).then(() => { alert("تم الحفظ"); toggleM(false); });
+            db.ref('settings/all').set(data).then(() => { alert("تم حفظ الإعدادات والموقع بنجاح"); toggleM(false); });
         }
 
         db.ref('settings/all').on('value', s => {
@@ -131,9 +156,13 @@
                 document.getElementById('s_in').value = d.s_in || "";
                 document.getElementById('s_out').value = d.s_out || "";
                 document.getElementById('m_abs').value = d.m_abs || "";
+                document.getElementById('s_lat').value = d.s_lat || "";
+                document.getElementById('s_lng').value = d.s_lng || "";
+                document.getElementById('s_range').value = d.s_range || 150;
             }
         });
 
+        // مراقبة الحضور والغياب
         const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
         db.ref('teachers').on('value', sT => {
             const ts = sT.val() || {};
@@ -156,7 +185,6 @@
                 const absCount = Object.keys(ts).length - p;
                 document.getElementById('absentT').innerText = absCount;
                 
-                // تحديث لوحة الغائبين
                 const panel = document.getElementById('absentAlertPanel');
                 if(absCount > 0) {
                     panel.style.display = 'block';
@@ -166,23 +194,18 @@
             });
         });
 
-        // وظيفة إرسال الرسائل الجماعية
         async function sendBulkAbsentMsg() {
-            const msgTemplate = document.getElementById('m_abs').value || "نحيطكم علماً بأنه لم يتم رصد حضوركم اليوم بمجمع ثانوية الصحافة، نرجو المسارعة بتسجيل الحضور.";
-            if(absentList.length === 0) return alert("لا يوجد غائبون حالياً");
-            
-            if(confirm(`سيتم فتح محادثات الواتساب لـ ${absentList.length} معلم، هل تريد المتابعة؟`)) {
-                for (const teacher of absentList) {
-                    if(teacher.phone) {
-                        const url = `https://wa.me/${teacher.phone}?text=${encodeURIComponent(msgTemplate)}`;
-                        window.open(url, '_blank');
-                        // تأخير بسيط بين كل فتح وآخر لتجنب حظر المتصفح
+            const msgTemplate = document.getElementById('m_abs').value || "يرجى تسجيل الحضور..";
+            if(absentList.length === 0) return alert("لا يوجد غائبون");
+            if(confirm(`إرسال لـ ${absentList.length} معلم؟`)) {
+                for (const t of absentList) {
+                    if(t.phone) {
+                        window.open(`https://wa.me/${t.phone}?text=${encodeURIComponent(msgTemplate)}`, '_blank');
                         await new Promise(r => setTimeout(r, 1000));
                     }
                 }
             }
         }
-
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString('ar-SA'); }, 1000);
     </script>
 </body>
