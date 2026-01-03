@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مركز إدارة المعلمين - ثانوية الصحافة</title>
+    <title>إدارة المعلمين والروابط - ثانوية الصحافة</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,12 +13,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        :root { --primary: #1a237e; --accent: #3f51b5; --danger: #e74c3c; --success: #27ae60; --bg: #f4f7f6; }
+        :root { --primary: #1a237e; --accent: #3f51b5; --danger: #e74c3c; --success: #27ae60; --warning: #f39c12; --bg: #f4f7f6; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 0; }
         .header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; }
         .container { max-width: 1000px; margin: -20px auto 50px; padding: 0 15px; }
         
-        /* قسم إضافة معلم جديد */
         .add-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .input-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
         input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-family: 'Tajawal'; outline: none; min-width: 180px; font-size: 14px; }
@@ -32,10 +31,11 @@
         .btn-copy { background: #e3f2fd; color: #1565c0; }
         .btn-wa { background: #e8f5e9; color: #2e7d32; }
         .btn-qr { background: #f3e5f5; color: #7b1fa2; }
+        .btn-edit { background: #fff3e0; color: var(--warning); } /* زر التعديل الجديد */
         .btn-del { background: #ffebee; color: var(--danger); }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; max-width: 350px; width: 90%; }
+        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; max-width: 400px; width: 90%; position: relative; }
         #qrcode { margin: 20px auto; display: flex; justify-content: center; padding: 10px; background: white; border-radius: 10px; }
     </style>
 </head>
@@ -60,7 +60,6 @@
                 <input type="text" id="teacherPass" placeholder="تعيين كلمة مرور...">
                 <button class="btn-add" onclick="addNewTeacher()"><i class="fas fa-save"></i> حفظ وإضافة</button>
             </div>
-            <p style="font-size: 11px; color: #7f8c8d; margin-top: 10px;">* سيطلب من المعلم كلمة المرور عند فتح رابط التبصيم لضمان الخصوصية.</p>
         </div>
 
         <div id="linksList"></div>
@@ -73,7 +72,28 @@
             <button class="btn-act" style="background:var(--success); color:white; width:100%; justify-content:center;" onclick="downloadQR()">
                 <i class="fas fa-download"></i> تحميل الباركود كصورة
             </button>
-            <button class="btn-act" style="background:#eee; width:100%; margin-top:10px; justify-content:center;" onclick="closeModal()">إغلاق</button>
+            <button class="btn-act" style="background:#eee; width:100%; margin-top:10px; justify-content:center;" onclick="closeModal('qrModal')">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: var(--primary); margin-bottom: 20px;"><i class="fas fa-edit"></i> تعديل بيانات المعلم</h3>
+            <input type="hidden" id="editTeacherId">
+            <div style="display: flex; flex-direction: column; gap: 12px; text-align: right;">
+                <label style="font-size: 12px; font-weight: bold;">اسم المعلم:</label>
+                <input type="text" id="editName" style="min-width: unset;">
+                
+                <label style="font-size: 12px; font-weight: bold;">رقم الجوال:</label>
+                <input type="text" id="editPhone" style="min-width: unset;">
+                
+                <label style="font-size: 12px; font-weight: bold;">كلمة المرور:</label>
+                <input type="text" id="editPass" style="min-width: unset;">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="btn-add" style="background: var(--success); flex: 1;" onclick="saveTeacherEdit()">حفظ التعديلات</button>
+                <button class="btn-act" style="background: #eee; flex: 1; justify-content: center;" onclick="closeModal('editModal')">إلغاء</button>
+            </div>
         </div>
     </div>
 
@@ -88,7 +108,6 @@
             return p;
         }
 
-        // إضافة معلم جديد مع كلمة السر
         function addNewTeacher() {
             const name = document.getElementById('teacherName').value;
             const id = document.getElementById('teacherID').value;
@@ -100,12 +119,39 @@
                 db.ref('teachers/' + id).set({ 
                     name: name,
                     phone: formattedPhone,
-                    password: pass // حفظ كلمة المرور في قاعدة البيانات
+                    password: pass
                 }).then(() => {
                     alert("✅ تم حفظ المعلم بنجاح");
                     location.reload();
                 });
             } else { alert("يرجى إكمال البيانات (الاسم، المعرف، وكلمة المرور)"); }
+        }
+
+        // وظائف التعديل الجديدة
+        function openEditModal(id, name, phone, pass) {
+            document.getElementById('editTeacherId').value = id;
+            document.getElementById('editName').value = name;
+            document.getElementById('editPhone').value = phone;
+            document.getElementById('editPass').value = pass;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function saveTeacherEdit() {
+            const id = document.getElementById('editTeacherId').value;
+            const name = document.getElementById('editName').value;
+            const phone = formatPhoneNumber(document.getElementById('editPhone').value);
+            const pass = document.getElementById('editPass').value;
+
+            if(name && pass) {
+                db.ref('teachers/' + id).update({
+                    name: name,
+                    phone: phone,
+                    password: pass
+                }).then(() => {
+                    alert("✅ تم تحديث البيانات بنجاح");
+                    closeModal('editModal');
+                });
+            } else { alert("الاسم وكلمة المرور مطلوبة"); }
         }
 
         function deleteTeacher(id) {
@@ -117,10 +163,12 @@
         db.ref('teachers').on('value', snap => {
             const list = snap.val() || {}; const cont = document.getElementById('linksList'); cont.innerHTML = "";
             Object.keys(list).forEach(id => {
-                const name = list[id].name;
-                const phone = list[id].phone || "";
-                const pass = list[id].password || "غير محددة";
+                const teacher = list[id];
+                const name = teacher.name;
+                const phone = teacher.phone || "";
+                const pass = teacher.password || "";
                 const link = `https://bakr4039-byte.github.io/Hader-App/index.html?id=${id}`;
+                
                 cont.innerHTML += `
                     <div class="teacher-card">
                         <div class="meta">
@@ -135,6 +183,7 @@
                             <button class="btn-act btn-copy" onclick="copy('${link}')"><i class="fas fa-copy"></i> نسخ</button>
                             <button class="btn-act btn-wa" onclick="sendWA('${link}', '${name}', '${phone}')"><i class="fab fa-whatsapp"></i> واتساب</button>
                             <button class="btn-act btn-qr" onclick="showQR('${link}', '${name}')"><i class="fas fa-qrcode"></i> باركود</button>
+                            <button class="btn-act btn-edit" onclick="openEditModal('${id}', '${name}', '${phone}', '${pass}')"><i class="fas fa-edit"></i> تعديل</button>
                             <button class="btn-act btn-del" onclick="deleteTeacher('${id}')"><i class="fas fa-trash"></i> حذف</button>
                         </div>
                     </div>
@@ -157,7 +206,8 @@
             new QRCode(document.getElementById("qrcode"), { text: url, width: 200, height: 200 });
             document.getElementById('qrModal').style.display = 'flex';
         }
-        function closeModal() { document.getElementById('qrModal').style.display = 'none'; }
+        
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
 
         function downloadQR() {
             const canvas = document.querySelector('#qrcode canvas');
