@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>منضبط - تسجيل الحضور</title>
     
     <link rel="manifest" href="manifest.json">
@@ -20,55 +20,66 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
-        .branding-header { text-align: center; margin-bottom: 20px; }
-        .branding-header h1 { margin: 0; color: #1a237e; font-size: 32px; letter-spacing: -1px; }
-        .branding-header p { margin: 5px 0 0; color: #555; font-size: 14px; font-weight: bold; }
+        :root { --primary-color: #1a237e; --secondary-color: #2c3e50; --success-color: #27ae60; --danger-color: #e74c3c; }
+        body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-tap-highlight-color: transparent; }
         
-        .header-info { background: #2c3e50; color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: center; }
-        .work-hours { background: #fff; width: 100%; max-width: 400px; padding: 10px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-around; border: 1px solid #e0e0e0; font-size: 13px; }
-        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; transition: 0.3s; }
+        /* الهوية البصرية - البراند */
+        .branding-header { text-align: center; margin-bottom: 15px; width: 100%; }
+        .branding-header h1 { margin: 0; color: var(--primary-color); font-size: 28px; letter-spacing: -1px; }
+        .branding-header p { margin: 2px 0 0; color: #555; font-size: 12px; font-weight: bold; }
+
+        /* حاويات المعلومات */
+        .header-info { background: var(--secondary-color); color: white; width: 100%; max-width: 400px; padding: 15px; border-radius: 20px; margin-bottom: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); box-sizing: border-box; }
+        .work-hours { background: #fff; width: 100%; max-width: 400px; padding: 12px; border-radius: 15px; margin-bottom: 15px; display: flex; justify-content: space-around; border: 1px solid #e0e0e0; font-size: 13px; font-weight: bold; box-sizing: border-box; }
+        
+        /* تنبيهات الموقع والنطاق */
+        .range-badge { width: 100%; max-width: 400px; padding: 12px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-weight: bold; transition: 0.3s; box-sizing: border-box; font-size: 14px; }
         .in-range { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
         .out-range { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
         
-        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; box-sizing: border-box; }
-        #map { height: 180px; width: 100%; border-radius: 20px; margin-bottom: 10px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn { width: 100%; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
-        .btn-in { background: #27ae60; } .btn-out { background: #e74c3c; }
+        .main-container { background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 100%; max-width: 400px; text-align: center; box-sizing: border-box; }
+        
+        /* إعدادات الخريطة المحسنة */
+        #map { height: 200px; width: 100%; border-radius: 15px; margin-bottom: 10px; border: 1px solid #ddd; background: #eee; z-index: 1; }
+        
+        /* الأزرار */
+        .btn { width: 100%; padding: 16px; margin: 8px 0; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; transition: 0.2s; }
+        .btn:active { transform: scale(0.96); }
+        .btn-in { background: var(--success-color); box-shadow: 0 4px 0 #1e8449; } 
+        .btn-out { background: var(--danger-color); box-shadow: 0 4px 0 #c0392b; }
 
-        /* شاشة القفل */
-        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        .pass-input { width: 100%; max-width: 300px; padding: 15px; border-radius: 12px; border: 2px solid #ddd; text-align: center; font-size: 24px; letter-spacing: 5px; margin-bottom: 20px; outline: none; transition: 0.3s; }
-        .pass-input:focus { border-color: #1a237e; box-shadow: 0 0 10px rgba(26, 35, 126, 0.2); }
+        /* شاشة قفل التحقق */
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .pass-card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
+        .pass-input { width: 100%; max-width: 280px; padding: 18px; border-radius: 15px; border: 2px solid #ddd; text-align: center; font-size: 26px; letter-spacing: 4px; margin-bottom: 20px; outline: none; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
     <div id="authOverlay">
-        <div class="container" style="max-width: 350px;">
+        <div class="pass-card">
             <div class="branding-header">
-                <i class="fas fa-fingerprint" style="font-size: 60px; color: #1a237e; margin-bottom: 10px;"></i>
+                <i class="fas fa-fingerprint" style="font-size: 60px; color: var(--primary-color); margin-bottom: 10px;"></i>
                 <h1>منضبط</h1>
                 <p>التزامك.. في بصمتك</p>
             </div>
-            <h2 id="welcomeMsg" style="margin-bottom: 5px;">جاري التحقق...</h2>
-            <p style="color: #666; font-size: 13px; margin-bottom: 20px;">يرجى إدخال كلمة المرور للمتابعة</p>
+            <h2 id="welcomeMsg" style="margin: 15px 0 5px; font-size: 18px;">جاري التحقق...</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 25px;">أدخل كلمة المرور الخاصة بك للمتابعة</p>
             <input type="password" id="passInput" class="pass-input" placeholder="****" inputmode="numeric">
-            <button class="btn" style="background: #1a237e;" onclick="verifyPassword()">دخول للنظام</button>
+            <button class="btn" style="background: var(--primary-color);" onclick="verifyPassword()">دخول للنظام</button>
         </div>
     </div>
 
     <div id="App" style="display: none; width: 100%; max-width: 400px;">
-        <div class="branding-header" style="margin-bottom: 15px;">
-            <h1 style="font-size: 24px;">منضبط</h1>
-            <p style="font-size: 11px;">نظام الحضور الذكي</p>
+        <div class="branding-header">
+            <h1>منضبط</h1>
+            <p>نظام الحضور الذكي</p>
         </div>
 
-        <div class="header-info" id="topBar">
-            <h3 id="schoolDisplay" style="margin:0">جاري التحميل...</h3>
-            <span style="font-size:16px; font-weight:bold; color:#3498db;" id="liveDay">---</span><br>
-            <small id="liveTime">00:00:00</small>
+        <div class="header-info">
+            <h3 id="schoolDisplay" style="margin:0; font-size: 18px;">تحميل...</h3>
+            <span style="font-size:15px; font-weight:bold; color:#3498db;" id="liveDay">---</span><br>
+            <small id="liveTime" style="font-size: 14px;">00:00:00</small>
         </div>
         
         <div class="work-hours">
@@ -78,45 +89,35 @@
         
         <div id="rangeStatus" class="range-badge out-range">جاري تحديد الموقع...</div>
         
-        <div id="map"></div>
-        <div class="container">
-            <h2 id="TN" style="margin-top:0; color:#2c3e50; font-size: 20px;"></h2>
+        <div id="map"></div> <div class="main-container">
+            <h2 id="TN" style="margin:0 0 15px 0; color:var(--secondary-color); font-size: 22px;"></h2>
             <button class="btn btn-in" onclick="H('حضور')"><i class="fas fa-sign-in-alt"></i> تسجيل حضور</button>
             <button class="btn btn-out" onclick="H('انصراف')"><i class="fas fa-sign-out-alt"></i> تسجيل انصراف</button>
         </div>
     </div>
 
     <script>
-        // تسجيل تطبيق الجوال
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
-            });
-        }
-
+        // 1. إعدادات Firebase والبيانات الأساسية
         const conf = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(conf); const db = firebase.database();
-        
         const ID = new URLSearchParams(window.location.search).get('id');
         let SLAT, SLNG, DIST, correctPass, tName, M, UM, schoolCircle;
 
-        // خيارات GPS المحسنة لـ iPhone
+        // 2. خيارات الـ GPS المحسنة للأجهزة
         const geoOptions = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
 
-        // 1. جلب بيانات الموظف
         if (ID) {
             db.ref('teachers/' + ID).once('value').then(s => {
                 if (s.exists()) {
-                    tName = s.val().name;
-                    correctPass = s.val().password;
+                    tName = s.val().name; correctPass = s.val().password;
                     document.getElementById('welcomeMsg').innerText = "مرحباً: " + tName;
                 } else {
-                    document.body.innerHTML = "<div style='text-align:center;margin-top:100px;'><h2>عفواً، الرابط غير صالح</h2></div>";
+                    document.body.innerHTML = "<h2 style='text-align:center; padding-top:100px;'>⚠️ رابط غير صالح</h2>";
                 }
             });
         }
 
-        // 2. معرّف الجهاز (ربط الجوال)
+        // 3. نظام ربط الجوال بالأمان
         function getDeviceID() {
             let id = localStorage.getItem('mundabit_device_id');
             if (!id) {
@@ -126,27 +127,24 @@
             return id;
         }
 
-        // 3. التحقق من كلمة السر والجوال
+        // 4. التحقق من كلمة السر وبدء تشغيل الإحداثيات من قاعدة البيانات
         function verifyPassword() {
             const input = document.getElementById('passInput').value;
             const currentDevID = getDeviceID();
-
             if (input === correctPass) {
                 db.ref('teachers/' + ID).once('value').then(snap => {
                     let linkedID = snap.val().deviceId;
                     if (!linkedID || linkedID === "") {
-                        // ربط الجهاز لأول مرة
                         db.ref('teachers/' + ID).update({ deviceId: currentDevID });
                         startApp();
                     } else if (linkedID === currentDevID) {
                         startApp();
                     } else {
-                        alert("⛔ عذراً، لا يمكنك التبصيم إلا من جهازك المسجل مسبقاً.");
+                        alert("⛔ لا يمكنك التبصيم إلا من جهازك المسجل.");
                     }
                 });
             } else {
                 alert("❌ كلمة المرور غير صحيحة!");
-                document.getElementById('passInput').value = "";
             }
         }
 
@@ -154,28 +152,38 @@
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('App').style.display = 'block';
             document.getElementById('TN').innerText = tName;
-            loadSettings();
-            initM();
-            startWatching();
+            // جلب الإحداثيات الفعلية من صفحة الإعدادات
+            loadSettingsAndSyncMap();
             setInterval(updateClock, 1000);
         }
 
-        function loadSettings() {
+        // 5. جلب الإحداثيات المخصصة من قاعدة البيانات وتحديث الخريطة
+        function loadSettingsAndSyncMap() {
             db.ref('settings/all').on('value', s => {
                 if(s.exists()){
                     const d = s.val();
                     document.getElementById('schoolDisplay').innerText = d.s_name || "المنشأة";
                     document.getElementById('schIn').innerText = d.s_in || "--:--";
                     document.getElementById('schOut').innerText = d.s_out || "--:--";
-                    SLAT = parseFloat(d.s_lat);
-                    SLNG = parseFloat(d.s_lng);
+                    
+                    // تحويل القيم النصية من الإعدادات إلى أرقام عشرية دقيقة
+                    SLAT = parseFloat(d.s_lat); 
+                    SLNG = parseFloat(d.s_lng); 
                     DIST = parseInt(d.s_range) || 150;
                     
-                    if (M) {
+                    // بناء الخريطة بناءً على إحداثيات الإعدادات المسجلة
+                    if (!M) {
+                        M = L.map('map').setView([SLAT, SLNG], 17);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(M);
+                        // حل مشكلة المربع الأبيض في الأيفون
+                        setTimeout(() => { M.invalidateSize(); }, 800);
+                    } else {
                         M.setView([SLAT, SLNG], 17);
-                        if (schoolCircle) M.removeLayer(schoolCircle);
-                        schoolCircle = L.circle([SLAT, SLNG], { radius: DIST, color: '#1a237e', fillOpacity: 0.1 }).addTo(M);
                     }
+                    
+                    if (schoolCircle) M.removeLayer(schoolCircle);
+                    schoolCircle = L.circle([SLAT, SLNG], { radius: DIST, color: '#1a237e', fillOpacity: 0.1 }).addTo(M);
+                    startWatching();
                 }
             });
         }
@@ -187,59 +195,36 @@
             document.getElementById('liveTime').innerText = now.toLocaleTimeString('ar-SA');
         }
 
-        function initM() {
-            if (!M && SLAT) {
-                M = L.map('map').setView([SLAT, SLNG], 17);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(M);
-                schoolCircle = L.circle([SLAT, SLNG], { radius: DIST, color: '#1a237e', fillOpacity: 0.1 }).addTo(M);
-            }
-        }
-
         function startWatching() {
             navigator.geolocation.watchPosition(p => {
                 const lat = p.coords.latitude, lng = p.coords.longitude;
                 const d = getD(lat, lng, SLAT, SLNG);
                 const stat = document.getElementById('rangeStatus');
-                
                 if (UM) M.removeLayer(UM); 
-                UM = L.circleMarker([lat, lng], {color:'red', radius:8}).addTo(M);
-                
-                if (d <= DIST) { 
-                    stat.innerText = "أنت داخل نطاق العمل ✅"; 
-                    stat.className = "range-badge in-range"; 
-                } else { 
-                    stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; 
-                    stat.className = "range-badge out-range"; 
-                }
-            }, (err) => {
-                const stat = document.getElementById('rangeStatus');
-                if(err.code === 1) stat.innerText = "يرجى السماح بالوصول للموقع ⚠️";
-                else stat.innerText = "جاري البحث عن إشارة GPS... ⏳";
-            }, geoOptions);
+                UM = L.circleMarker([lat, lng], {color:'red', radius:7}).addTo(M);
+                if (d <= DIST) { stat.innerText = "أنت داخل نطاق العمل ✅"; stat.className = "range-badge in-range"; }
+                else { stat.innerText = `خارج النطاق بمسافة ${Math.round(d)} متر ❌`; stat.className = "range-badge out-range"; }
+            }, (err) => { document.getElementById('rangeStatus').innerText = "⚠️ يرجى تفعيل الـ GPS للمتابعة"; }, geoOptions);
         }
 
         function H(t) {
             navigator.geolocation.getCurrentPosition(p => {
                 const d = getD(p.coords.latitude, p.coords.longitude, SLAT, SLNG);
                 if (d <= DIST) {
-                    const now = new Date(); 
-                    const time = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+                    const now = new Date();
                     const dk = now.toLocaleDateString('en-GB').replace(/\//g, '-');
-                    db.ref(`attendance/${dk}/${ID}`).update({ 
-                        name: tName, 
-                        [t === 'حضور' ? 'checkIn' : 'checkOut']: time, 
-                        inStatus: "حاضر" 
-                    }).then(() => alert(`✅ تم تسجيل ${t} بنجاح الساعة ${time}`));
-                } else { 
-                    alert("❌ لا يمكنك التبصيم، أنت خارج النطاق الجغرافي للمنشأة!"); 
-                }
-            }, (err) => alert("خطأ في تحديد الموقع، تأكد من تشغيل الـ GPS"), geoOptions);
+                    db.ref(`attendance/${dk}/${ID}`).update({
+                        name: tName,
+                        [t === 'حضور' ? 'checkIn' : 'checkOut']: now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'}),
+                        inStatus: "حاضر"
+                    }).then(() => alert(`✅ تم تسجيل ${t} بنجاح`));
+                } else { alert("❌ عذراً، أنت خارج النطاق الجغرافي المحدد في الإعدادات!"); }
+            }, (err) => alert("⚠️ لم يتم تحديد موقعك، تأكد من وجود إشارة GPS"), geoOptions);
         }
 
         function getD(la1, lo1, la2, lo2) {
-            const R = 6371e3; 
-            const dLa = (la2-la1)*Math.PI/180; 
-            const dLo = (lo2-lo1)*Math.PI/180;
+            const R = 6371e3;
+            const dLa = (la2-la1)*Math.PI/180, dLo = (lo2-lo1)*Math.PI/180;
             const a = Math.sin(dLa/2)**2 + Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
