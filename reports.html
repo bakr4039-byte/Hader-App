@@ -2,43 +2,74 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تقارير أداء الموظفين - ثانوية الصحافة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منضبط - تقارير الأداء</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
-        body { font-family: 'Tajawal', sans-serif; background: #f8fafc; margin: 0; }
-        .top-nav { background: #1a237e; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; color: white; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
-        .filter-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 25px; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        th { background: #1e293b; color: white; padding: 15px; font-size: 13px; }
-        td { padding: 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 500; }
-        .btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; transition: 0.3s; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        :root { --primary: #1a237e; --accent: #3f51b5; --bg: #f8fafc; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; }
+        
+        /* الهوية البصرية (منضبط) */
+        .top-nav { background: var(--primary); padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .branding { display: flex; align-items: center; gap: 12px; }
+        .branding h3 { margin: 0; font-size: 22px; }
+        .branding span { font-size: 12px; opacity: 0.8; font-weight: normal; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        
+        .filter-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; margin-bottom: 25px; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .filter-card input { padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-family: 'Tajawal'; outline: none; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 10px; }
+        th { background: #1e293b; color: white; padding: 18px 10px; font-size: 13px; text-align: center; }
+        td { padding: 15px 10px; text-align: center; border-bottom: 1px solid #f1f5f9; font-size: 14px; font-weight: 500; }
+        tr:hover { background-color: #f8fafc; }
+
+        .btn { padding: 10px 25px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; color: white; font-family: 'Tajawal'; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-analyze { background: var(--accent); }
+        .btn-excel { background: #27ae60; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .status-absent { color: #e74c3c; font-weight: bold; }
+        .status-missing { color: #f39c12; }
     </style>
 </head>
 <body>
-    <div class="top-nav">
-        <a href="admin.html" style="color:white; text-decoration:none;"><i class="fas fa-arrow-right"></i> العودة للوحة الإدارة</a>
-        <h3 id="repSchool" style="margin:0">جاري التحميل...</h3>
-        <span>تقرير أداء الموظفين</span>
-    </div>
+
+    <nav class="top-nav">
+        <a href="admin.html" style="color:white; text-decoration:none;"><i class="fas fa-arrow-right"></i> العودة</a>
+        <div class="branding">
+            <i class="fas fa-fingerprint" style="font-size: 28px;"></i>
+            <div>
+                <h3>منضبط</h3>
+                <span>التزامك.. في بصمتك</span>
+            </div>
+        </div>
+        <h4 id="repSchoolName" style="margin:0; opacity:0.9;">تحميل...</h4>
+    </nav>
 
     <div class="container">
         <div class="filter-card">
-            <label style="font-weight: bold; margin-left: 10px;">الفترة من:</label>
-            <input type="date" id="dateF" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
-            <label style="font-weight: bold; margin: 0 10px;">إلى:</label>
-            <input type="date" id="dateT" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
-            
-            <button class="btn" style="background:#3f51b5; margin:0 10px;" onclick="loadR()">
-                <i class="fas fa-chart-line"></i> تحليل البيانات
+            <div>
+                <label style="font-weight: bold; margin-left: 5px;">من:</label>
+                <input type="date" id="dateF">
+            </div>
+            <div>
+                <label style="font-weight: bold; margin-left: 5px;">إلى:</label>
+                <input type="date" id="dateT">
+            </div>
+            <button class="btn btn-analyze" onclick="loadR()">
+                <i class="fas fa-chart-pie"></i> تحليل الأداء
             </button>
-            <button class="btn" style="background:#27ae60" onclick="exportEX()">
-                <i class="fas fa-file-excel"></i> تصدير Excel
+            <button class="btn btn-excel" onclick="exportEX()">
+                <i class="fas fa-file-excel"></i> تصدير إكسل
             </button>
         </div>
 
@@ -48,29 +79,28 @@
                     <th>اسم الموظف</th>
                     <th>أيام الغياب</th>
                     <th>أيام التأخير</th>
-                    <th>إجمالي دقائق التأخير</th>
+                    <th>دقائق التأخير</th>
                     <th>خروج مبكر (مرات)</th>
                     <th>تبصيم ناقص</th>
                 </tr>
             </thead>
             <tbody id="rBody">
-                <tr><td colspan="6" style="padding: 30px; color: #999;">يرجى اختيار الفترة الزمنية ثم الضغط على تحليل البيانات</td></tr>
+                <tr><td colspan="6" style="padding: 40px; color: #94a3b8;">يرجى اختيار الفترة الزمنية والضغط على تحليل البيانات</td></tr>
             </tbody>
         </table>
     </div>
 
     <script>
-        // إعدادات Firebase
         const conf = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(conf); const db = firebase.database();
         
         let sIn = "07:00", sOut = "13:00";
 
-        // جلب الإعدادات الموحدة من لوحة الإدارة
+        // جلب الإعدادات المحدثة من "منضبط"
         db.ref('settings/all').on('value', s => {
             if(s.exists()){
                 const d = s.val();
-                document.getElementById('repSchool').innerText = d.s_name || "ثانوية الصحافة";
+                document.getElementById('repSchoolName').innerText = d.s_name || "المنشأة";
                 sIn = d.s_in || "07:00"; 
                 sOut = d.s_out || "13:00";
             }
@@ -80,7 +110,7 @@
             const dateFrom = document.getElementById('dateF').value;
             const dateTo = document.getElementById('dateT').value;
 
-            if(!dateFrom || !dateTo) return alert("يرجى تحديد التاريخ أولاً");
+            if(!dateFrom || !dateTo) return alert("يرجى تحديد النطاق الزمني");
 
             const start = new Date(dateFrom); 
             const end = new Date(dateTo);
@@ -92,7 +122,10 @@
             let stats = {}; 
             Object.keys(ts).forEach(id => stats[id] = { n: ts[id].name, a:0, ld:0, lm:0, em:0, no:0 });
 
-            // حلقة تكرارية على الأيام المختارة
+            const body = document.getElementById('rBody');
+            body.innerHTML = "<tr><td colspan='6'>جاري معالجة البيانات...</td></tr>";
+
+            // تحليل البيانات يوماً بيوم
             for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                 const dk = d.toLocaleDateString('en-GB').replace(/\//g, '-');
                 const adS = await db.ref('attendance/' + dk).once('value'); 
@@ -101,57 +134,55 @@
                 Object.keys(stats).forEach(id => {
                     const record = ad[id]; 
                     if(!record) {
-                        stats[id].a++; // احتساب غياب
+                        stats[id].a++; // غياب
                     } else {
-                        // حساب التأخير في الحضور
-                        const lateMinutes = diff(sIn, record.checkIn); 
-                        if(lateMinutes > 0){ 
+                        // حساب دقائق التأخير
+                        const late = diff(sIn, record.checkIn); 
+                        if(late > 0){ 
                             stats[id].ld++; 
-                            stats[id].lm += lateMinutes; 
+                            stats[id].lm += late; 
                         }
                         
                         // حساب الخروج المبكر
-                        const earlyMinutes = record.checkOut ? diff(record.checkOut, sOut) : 0; 
-                        if(earlyMinutes > 0) stats[id].em++;
+                        const early = record.checkOut ? diff(record.checkOut, sOut) : 0; 
+                        if(early > 0) stats[id].em++;
                         
-                        // احتساب التبصيم الناقص (حضر ولم ينصرف)
+                        // تبصيم ناقص (لم يسجل انصراف)
                         if(record.checkIn && (!record.checkOut || record.checkOut === '--')) stats[id].no++;
                     }
                 });
             }
 
-            // عرض النتائج في الجدول
-            const body = document.getElementById('rBody'); 
             body.innerHTML = "";
-            
             Object.values(stats).forEach(s => {
                 body.innerHTML += `
                     <tr>
                         <td>${s.n}</td>
-                        <td style="color:${s.a > 0 ? 'red' : 'inherit'}">${s.a}</td>
+                        <td class="${s.a > 0 ? 'status-absent' : ''}">${s.a}</td>
                         <td>${s.ld}</td>
                         <td>${s.lm} دقيقة</td>
                         <td>${s.em}</td>
-                        <td style="color:orange">${s.no}</td>
+                        <td class="${s.no > 0 ? 'status-missing' : ''}">${s.no}</td>
                     </tr>`;
             });
         }
 
-        // دالة حساب فارق الدقائق بين وقتين
+        // دالة حساب فارق الوقت بالدقائق
         function diff(t1, t2) {
             if(!t1 || !t2 || t2 === '--') return 0;
             const [h1, m1] = t1.split(':').map(Number); 
             const [h2, m2] = t2.split(':').map(Number);
-            const totalMinutes1 = h1 * 60 + m1;
-            const totalMinutes2 = h2 * 60 + m2;
-            const difference = totalMinutes2 - totalMinutes1;
-            return difference > 0 ? difference : 0;
+            const total1 = h1 * 60 + m1;
+            const total2 = h2 * 60 + m2;
+            const d = total2 - total1;
+            return d > 0 ? d : 0;
         }
 
-        // دالة تصدير الملف إلى Excel
+        // تصدير التقارير ببراند منضبط
         function exportEX() { 
-            const fileName = `تقرير_أداء_${document.getElementById('repSchool').innerText}.xlsx`;
-            XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('rTable')), fileName); 
+            const name = document.getElementById('repSchoolName').innerText;
+            const wb = XLSX.utils.table_to_book(document.getElementById('rTable'));
+            XLSX.writeFile(wb, `تقرير_منضبط_${name}.xlsx`); 
         }
     </script>
 </body>
