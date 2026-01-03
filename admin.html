@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - ثانوية الصحافة</title>
+    <title>لوحة إدارة الموظفين - ثانوية الصحافة</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -25,7 +25,6 @@
         .badge { padding: 5px 12px; border-radius: 15px; font-size: 11px; font-weight: bold; }
         .present { background: #e8f5e9; color: #2e7d32; } .absent { background: #ffebee; color: #c62828; }
         
-        /* نافذة الإعدادات الشاملة */
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; justify-content:center; align-items:center; }
         .modal-content { background:white; border-radius:25px; width:95%; max-width:900px; height: 85vh; overflow-y: auto; position: relative; }
         .modal-body { padding: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
@@ -40,35 +39,35 @@
 </head>
 <body>
     <div class="header">
-        <h1>لوحة إدارة ثانوية الصحافة</h1>
+        <h1>لوحة إدارة الموظفين - ثانوية الصحافة</h1>
         <div id="clock" style="font-size: 14px; opacity: 0.8; margin-top: 10px;"></div>
     </div>
 
     <div class="container">
         <div class="action-bar">
-            <a href="links.html" class="btn" style="background:#34495e"><i class="fas fa-link"></i> الروابط</a>
-            <a href="reports.html" class="btn" style="background:#8e44ad"><i class="fas fa-file-invoice"></i> التقارير</a>
+            <a href="links.html" class="btn" style="background:#34495e"><i class="fas fa-link"></i> إدارة الموظفين والروابط</a>
+            <a href="reports.html" class="btn" style="background:#8e44ad"><i class="fas fa-file-invoice"></i> تقارير الأداء</a>
             <button class="btn" style="background:#607d8b" onclick="toggleM(true)"><i class="fas fa-cog"></i> الإعدادات</button>
-            <button class="btn" style="background:#e67e22" onclick="location.reload()"><i class="fas fa-sync"></i> تحديث</button>
+            <button class="btn" style="background:#e67e22" onclick="location.reload()"><i class="fas fa-sync"></i> تحديث الحالة</button>
         </div>
 
         <div id="absentAlertPanel" class="absentees-panel">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <h4 style="margin:0; color:#be123c;"><i class="fas fa-exclamation-triangle"></i> قائمة الغائبين حتى الآن: <span id="absentCount">0</span> معلم</h4>
-                <button class="btn" style="background:#be123c; font-size:12px;" onclick="sendBulkAbsentMsg()"><i class="fab fa-whatsapp"></i> إرسال رسائل غياب جماعية</button>
+                <h4 style="margin:0; color:#be123c;"><i class="fas fa-exclamation-triangle"></i> موظفون لم يسجلوا حضوراً حتى الآن: <span id="absentCount">0</span></h4>
+                <button class="btn" style="background:#be123c; font-size:12px;" onclick="sendBulkAbsentMsg()"><i class="fab fa-whatsapp"></i> إرسال تذكير غياب جماعي</button>
             </div>
             <div id="absentNames" style="margin-top:10px; font-size:13px; color:#9f1239;"></div>
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card">إجمالي المعلمين <span class="val" id="totalT">0</span></div>
+            <div class="stat-card">إجمالي الموظفين <span class="val" id="totalT">0</span></div>
             <div class="stat-card">حاضرون الآن <span class="val" id="presentT" style="color:#2ecc71">0</span></div>
             <div class="stat-card">غائبون <span class="val" id="absentT" style="color:#e74c3c">0</span></div>
         </div>
 
         <div class="table-card">
             <table>
-                <thead><tr><th>المعلم</th><th>حضور</th><th>انصراف</th><th>الحالة</th></tr></thead>
+                <thead><tr><th>الموظف</th><th>وقت الحضور</th><th>وقت الانصراف</th><th>حالة الحضور</th></tr></thead>
                 <tbody id="adminBody"></tbody>
             </table>
         </div>
@@ -77,7 +76,7 @@
     <div id="setModal" class="modal">
         <div class="modal-content">
             <div style="padding:20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
-                <h3><i class="fas fa-tools"></i> خيارات البرنامج والإعدادات المتقدمة</h3>
+                <h3><i class="fas fa-tools"></i> خيارات وإعدادات الموظفين</h3>
                 <i class="fas fa-times" style="cursor:pointer" onclick="toggleM(false)"></i>
             </div>
             <div class="modal-body">
@@ -104,14 +103,14 @@
                 </div>
                 
                 <div class="set-section">
-                    <h4>الرسائل الجماعية</h4>
+                    <h4>الرسائل الجماعية للموظفين</h4>
                     <div class="form-group"><label>قالب رسالة الغياب:</label>
-                        <textarea id="m_abs" rows="3"></textarea>
+                        <textarea id="m_abs" rows="3" placeholder="مثال: نرجو منكم سرعة تسجيل الحضور للضرورة.."></textarea>
                     </div>
                 </div>
             </div>
             <div style="padding:20px; border-top:1px solid #eee; text-align:center;">
-                <button class="btn" style="background:var(--success); width:200px; justify-content:center; margin:auto;" onclick="saveSet()">حفظ الإعدادات</button>
+                <button class="btn" style="background:var(--success); width:200px; justify-content:center; margin:auto;" onclick="saveSet()">حفظ إعدادات الموظفين</button>
             </div>
         </div>
     </div>
@@ -123,14 +122,13 @@
 
         function toggleM(s) { document.getElementById('setModal').style.display = s?'flex':'none'; }
 
-        // وظيفة جلب الموقع الحالي للمدير
         function getCurrentLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
                     document.getElementById('s_lat').value = position.coords.latitude;
                     document.getElementById('s_lng').value = position.coords.longitude;
-                    alert("تم جلب الإحداثيات الحالية بنجاح ✅");
-                }, () => alert("يرجى تفعيل تصريح الموقع في المتصفح"));
+                    alert("تم تحديد الموقع الجغرافي للموظفين بنجاح ✅");
+                }, () => alert("يرجى تفعيل صلاحية الموقع الجغرافي"));
             }
         }
 
@@ -141,11 +139,11 @@
                 s_in: document.getElementById('s_in').value,
                 s_out: document.getElementById('s_out').value,
                 m_abs: document.getElementById('m_abs').value,
-                s_lat: document.getElementById('s_lat').value, // حفظ خط العرض
-                s_lng: document.getElementById('s_lng').value, // حفظ خط الطول
-                s_range: document.getElementById('s_range').value // حفظ المسافة
+                s_lat: document.getElementById('s_lat').value,
+                s_lng: document.getElementById('s_lng').value,
+                s_range: document.getElementById('s_range').value
             };
-            db.ref('settings/all').set(data).then(() => { alert("تم حفظ الإعدادات والموقع بنجاح"); toggleM(false); });
+            db.ref('settings/all').set(data).then(() => { alert("تم حفظ إعدادات النظام بنجاح"); toggleM(false); });
         }
 
         db.ref('settings/all').on('value', s => {
@@ -162,7 +160,7 @@
             }
         });
 
-        // مراقبة الحضور والغياب
+        // مراقبة حضور وغياب الموظفين
         const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
         db.ref('teachers').on('value', sT => {
             const ts = sT.val() || {};
@@ -189,15 +187,15 @@
                 if(absCount > 0) {
                     panel.style.display = 'block';
                     document.getElementById('absentCount').innerText = absCount;
-                    document.getElementById('absentNames').innerText = "الغائبون: " + absentList.map(a => a.name).join('، ');
+                    document.getElementById('absentNames').innerText = "الموظفون الغائبون: " + absentList.map(a => a.name).join('، ');
                 } else { panel.style.display = 'none'; }
             });
         });
 
         async function sendBulkAbsentMsg() {
-            const msgTemplate = document.getElementById('m_abs').value || "يرجى تسجيل الحضور..";
-            if(absentList.length === 0) return alert("لا يوجد غائبون");
-            if(confirm(`إرسال لـ ${absentList.length} معلم؟`)) {
+            const msgTemplate = document.getElementById('m_abs').value || "يرجى تسجيل الحضور للضرورة..";
+            if(absentList.length === 0) return alert("لا يوجد موظفون غائبون حالياً");
+            if(confirm(`سيتم إرسال تذكير لـ ${absentList.length} موظف غائب، هل تريد المتابعة؟`)) {
                 for (const t of absentList) {
                     if(t.phone) {
                         window.open(`https://wa.me/${t.phone}?text=${encodeURIComponent(msgTemplate)}`, '_blank');
