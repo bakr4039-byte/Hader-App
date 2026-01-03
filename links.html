@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة المعلمين والروابط - ثانوية الصحافة</title>
+    <title>مركز إدارة المعلمين - ثانوية الصحافة</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,11 +16,12 @@
         :root { --primary: #1a237e; --accent: #3f51b5; --danger: #e74c3c; --success: #27ae60; --bg: #f4f7f6; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 0; }
         .header { background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; }
-        .container { max-width: 900px; margin: -20px auto 50px; padding: 0 15px; }
+        .container { max-width: 1000px; margin: -20px auto 50px; padding: 0 15px; }
         
+        /* قسم إضافة معلم جديد */
         .add-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .input-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-family: 'Tajawal'; outline: none; min-width: 200px; font-size: 14px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-family: 'Tajawal'; outline: none; min-width: 180px; font-size: 14px; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .btn-add:hover { background: var(--accent); transform: translateY(-2px); }
 
@@ -56,9 +57,10 @@
                 <input type="text" id="teacherName" placeholder="اسم المعلم المعتمد...">
                 <input type="text" id="teacherID" placeholder="رقم الهوية (ID)...">
                 <input type="text" id="teacherPhone" placeholder="رقم الجوال (05...)">
+                <input type="text" id="teacherPass" placeholder="تعيين كلمة مرور...">
                 <button class="btn-add" onclick="addNewTeacher()"><i class="fas fa-save"></i> حفظ وإضافة</button>
             </div>
-            <p style="font-size: 11px; color: #7f8c8d; margin-top: 10px;">* سيتم تحويل الرقم تلقائياً للصيغة الدولية (966) عند الحفظ.</p>
+            <p style="font-size: 11px; color: #7f8c8d; margin-top: 10px;">* سيطلب من المعلم كلمة المرور عند فتح رابط التبصيم لضمان الخصوصية.</p>
         </div>
 
         <div id="linksList"></div>
@@ -79,29 +81,31 @@
         const config = { databaseURL: "https://hader-system-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(config); const db = firebase.database();
 
-        // دالة تنسيق الرقم تلقائياً
         function formatPhoneNumber(phone) {
             let p = phone.trim();
-            if (p.startsWith('05')) { p = '966' + p.substring(1); } // تحويل 05 إلى 9665
-            else if (p.startsWith('5') && p.length === 9) { p = '966' + p; } // تحويل 5 إلى 9665
+            if (p.startsWith('05')) { p = '966' + p.substring(1); }
+            else if (p.startsWith('5') && p.length === 9) { p = '966' + p; }
             return p;
         }
 
+        // إضافة معلم جديد مع كلمة السر
         function addNewTeacher() {
             const name = document.getElementById('teacherName').value;
             const id = document.getElementById('teacherID').value;
+            const pass = document.getElementById('teacherPass').value;
             let phone = document.getElementById('teacherPhone').value;
             
-            if(name && id) {
-                const formattedPhone = formatPhoneNumber(phone); // التنسيق التلقائي
+            if(name && id && pass) {
+                const formattedPhone = formatPhoneNumber(phone);
                 db.ref('teachers/' + id).set({ 
                     name: name,
-                    phone: formattedPhone
+                    phone: formattedPhone,
+                    password: pass // حفظ كلمة المرور في قاعدة البيانات
                 }).then(() => {
-                    alert("✅ تم حفظ المعلم برقم الجوال: " + formattedPhone);
+                    alert("✅ تم حفظ المعلم بنجاح");
                     location.reload();
                 });
-            } else { alert("يرجى إكمال الاسم والمعرف على الأقل"); }
+            } else { alert("يرجى إكمال البيانات (الاسم، المعرف، وكلمة المرور)"); }
         }
 
         function deleteTeacher(id) {
@@ -115,13 +119,15 @@
             Object.keys(list).forEach(id => {
                 const name = list[id].name;
                 const phone = list[id].phone || "";
+                const pass = list[id].password || "غير محددة";
                 const link = `https://bakr4039-byte.github.io/Hader-App/index.html?id=${id}`;
                 cont.innerHTML += `
                     <div class="teacher-card">
                         <div class="meta">
                             <div>
                                 <span style="font-weight:bold; font-size:17px;">${name}</span><br>
-                                <small style="color:#27ae60">${phone ? '<i class="fab fa-whatsapp"></i> ' + phone : 'لا يوجد رقم'}</small>
+                                <small style="color:#27ae60">${phone ? '📱 ' + phone : 'لا يوجد رقم'}</small> | 
+                                <small style="color:#accent">🔑 كلمة السر: <strong>${pass}</strong></small>
                             </div>
                             <small style="color:#999">معرف: ${id}</small>
                         </div>
