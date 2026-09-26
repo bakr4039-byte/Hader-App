@@ -1,0 +1,44 @@
+# يبني ملف AAB (Android App Bundle) جاهزاً لرفعه على Google Play، تلقائياً عند كل رفع (push) لهذا المستودع.
+# لا يحتاج أي شيء على جهازك — يعمل بالكامل على خوادم GitHub.
+name: build-android-aab
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: تنزيل المشروع
+        uses: actions/checkout@v4
+
+      - name: تثبيت Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: إعادة بناء مفتاح التوقيع من السرّ المخزَّن
+        run: |
+          mkdir -p android/keystore
+          echo "${{ secrets.HADER_KEYSTORE_BASE64 }}" | base64 -d > android/keystore/hader-upload.keystore
+
+      - name: منح صلاحية التنفيذ لسكربت Gradle
+        run: chmod +x android/gradlew
+
+      - name: بناء وتوقيع AAB
+        working-directory: android
+        env:
+          HADER_STORE_PASSWORD: ${{ secrets.HADER_KEYSTORE_PASSWORD }}
+          HADER_KEY_ALIAS: ${{ secrets.HADER_KEY_ALIAS }}
+          HADER_KEY_PASSWORD: ${{ secrets.HADER_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --stacktrace
+
+      - name: رفع الملف الناتج (AAB) كمرفق تحميل
+        uses: actions/upload-artifact@v4
+        with:
+          name: hader-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
